@@ -5,7 +5,7 @@ Created on Thu Jul  9 14:23:03 2020
 
 @author: mfeldman
 """
-
+###WORK IN PROGRESS; NOT DOCUMENTED YET###
 #%%
 import pyart
 import numpy as np
