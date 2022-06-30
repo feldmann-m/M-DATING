@@ -19,6 +19,7 @@ from zipfile import ZipFile
 import shutil
 from skimage.draw import polygon
 import transform
+import geojson as gs
 #%%
 def blockPrint():
     """
@@ -485,3 +486,97 @@ def TRT_to_grid(year, event, path):
                     cells[rr,cc]=int(t[0].values);
             if np.nansum(cells.flatten())>0:cellist.append(cells); timelist.append(time)
     return cellist, timelist
+
+def get_TRT(time, path):
+    """
+    Extracts contours from TRT cells and produces gridded product for entire day
+
+    Parameters
+    ----------
+    year : string
+        year in YYYY.
+    event : date in
+        YYDDD.
+    path : dict
+        dict containing all paths.
+
+    Returns
+    -------
+    cellist : list of arrays
+        list of all 2D gridded TRT cells.
+    timelist : list
+        list of all valid timesteps.
+
+    """
+    o_x=254000
+    o_y=-159000
+    lx=710; ly=640
+    
+    cpath='/store/mch/msrad/radar/swiss/data/'+year+'/'+event
+    cellist=[]; timelist=[]
+    for r, d, f in os.walk(cpath):
+        f=sorted(f,key=str.lower)
+        for file in f:
+            if time in file and 'TRT' in file:
+                cells=np.zeros([ly,lx])
+                print(file)
+                data=pd.read_csv(cpath+file).iloc[8:]
+                for n in range(len(data)):
+                    t=data.iloc[n].str.split(';',expand=True)
+                    TRT_ID=int(t[0].values)
+                    time=int(t[1].values)
+                    tt=np.array(t)[0,27:-1]
+                    tt=np.reshape(tt,[int(len(tt)/2),2])
+                    tlat=tt[:,1].astype(float); tlon=tt[:,0].astype(float)
+                    chx,chy=transform.c_transform(tlon,tlat)
+                    ix=np.round((chx-o_x)/1000).astype(int)
+                    iy=np.round((chy-o_y)/1000).astype(int)
+                    rr, cc = polygon(iy, ix, cells.shape)
+                    cells[rr,cc]=int(t[0].values);
+            if np.nansum(cells.flatten())>0:cellist.append(cells); timelist.append(time)
+    return cellist, timelist
+
+def write_histfile(phist,nhist,path):
+    
+    try: shutil.rmtree(path["hist"])
+    except: print("directory "+ path["hist"]+ " does not exist")
+    
+    phist.to_csv(path["temp"]+'phist.txt', header=phist.columns, index=range(len(phist)), sep=';', mode='a')
+    nhist.to_csv(path["temp"]+'nhist.txt', header=nhist.columns, index=range(len(nhist)), sep=';', mode='a')
+    
+def read_histfile(path):
+    phist=pd.read_csv(path["hist"]+'phist.txt', sep=';')
+    phist= phist.drop(columns='Unnamed: 0')
+    nhist=pd.read_csv(path["hist"]+'nhist.txt', sep=';')
+    nhist= nhist.drop(columns='Unnamed: 0')
+    return phist,nhist
+
+def df_to_geojson(df, properties, lat='x', lon='y'):
+    # create a new python dict to contain our geojson data, using geojson format
+    geojson = {'type':'FeatureCollection', 'features':[]}
+
+    # loop through each row in the dataframe and convert each row to geojson format
+    for _, row in df.iterrows():
+        # create a feature template to fill in
+        feature = {'type':'Feature',
+                   'properties':{},
+                   'geometry':{'type':'Point',
+                               'coordinates':[]}}
+
+        # fill in the coordinates
+        feature['geometry']['coordinates'] = [row[lon],row[lat]]
+
+        # for each column, get the value and add it as a new feature property
+        for prop in properties:
+            feature['properties'][prop] = row[prop]
+        
+        # add this feature (aka, converted dataframe row) to the list of features inside our dict
+        geojson['features'].append(feature)
+    
+    return geojson
+
+def write_geojson(tower_list,file):
+    prop=tower_list.columns
+    geojson=df_to_geojson(tower_list,prop)
+    with open(file, 'w') as f:
+        dump(feature_collection, f)

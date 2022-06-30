@@ -439,3 +439,30 @@ def summarise_rot(tower_list, ID_list):
         if len(close[0])<3 or np.nanmax(ranges)<20: continue
         else: rotation=rotation.append(rot_track)
     return rotation
+
+def rot_hist(tower_list, hist):
+    hist2=pd.DataFrame(data=None, index=None, columns=["ID","rotdir","cont","dis","last"])
+    IDs=np.unique(tower_list.ID)
+    time=tower_list.time[0]
+    delta=datetime.strptime("25","%M")-datetime.strptime("5","%M")
+    for t in range(len(hist)):
+        h=hist[t]
+        if datetime.strptime(str(time.astype(int).values[0]), "%y%j%H%M")-datetime.strptime(str(h.last.astype(int).values[0]), "%y%j%H%M")>delta: continue
+        for n in range(len(IDs)):
+            if h.ID==IDs[n]:
+                t=tower_list[n]
+                rr=np.nanmax([t.A_range,t.D_range,t.L_range,t.P_range,t.W_range])
+                h.cont+=1
+                h.dis=np.nanmax([rr,h.dis])
+                h.last=time
+                hist2=hist2.append(h)
+    for n in range(len(IDs)):
+        if IDs[n] not in hist2.ID:
+            t=tower_list[n]
+            h=pd.DataFrame(data=None, index=len(hist2), columns=["ID","rotdir","cont","dis","last"])
+            h.ID=IDs[n]
+            h.cont=0
+            h.dis=np.nanmax([t.A_range,t.D_range,t.L_range,t.P_range,t.W_range])
+            h.last=time
+            hist2=hist2.append(h)
+    return hist2
