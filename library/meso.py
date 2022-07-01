@@ -443,6 +443,10 @@ def summarise_rot(tower_list, ID_list):
 def rot_hist(tower_list, hist):
     hist2=pd.DataFrame(data=None, index=None, columns=["ID","rotdir","cont","dis","last"])
     IDs=np.unique(tower_list.ID)
+    fill=np.zeros(len(tower_list))
+    tower_list["cont"]=fill
+    tower_list["loc"]=fill
+    tower_list["flag"]=fill
     time=tower_list.time[0]
     delta=datetime.strptime("25","%M")-datetime.strptime("5","%M")
     for t in range(len(hist)):
@@ -453,7 +457,9 @@ def rot_hist(tower_list, hist):
                 t=tower_list[n]
                 rr=np.nanmax([t.A_range,t.D_range,t.L_range,t.P_range,t.W_range])
                 h.cont+=1
+                if h.cont >= 3: tower_list.iloc[n].cont=1
                 h.dis=np.nanmax([rr,h.dis])
+                if h.dis >= 20: tower_list.iloc[n].loc=1
                 h.last=time
                 hist2=hist2.append(h)
     for n in range(len(IDs)):
@@ -463,6 +469,8 @@ def rot_hist(tower_list, hist):
             h.ID=IDs[n]
             h.cont=0
             h.dis=np.nanmax([t.A_range,t.D_range,t.L_range,t.P_range,t.W_range])
+            if h.dis >= 20: tower_list.iloc[n].loc=1
             h.last=time
             hist2=hist2.append(h)
-    return hist2
+    tower_list.flag=tower_list.cont*tower_list.loc
+    return hist2,tower_list

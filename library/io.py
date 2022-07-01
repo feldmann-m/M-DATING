@@ -512,15 +512,15 @@ def get_TRT(time, path):
     o_y=-159000
     lx=710; ly=640
     
-    cpath='/store/mch/msrad/radar/swiss/data/'+year+'/'+event
+    #cpath='/store/mch/msrad/radar/swiss/data/'+year+'/'+event
     cellist=[]; timelist=[]
-    for r, d, f in os.walk(cpath):
+    for r, d, f in os.walk(path['temp']):
         f=sorted(f,key=str.lower)
         for file in f:
             if time in file and 'TRT' in file:
                 cells=np.zeros([ly,lx])
                 print(file)
-                data=pd.read_csv(cpath+file).iloc[8:]
+                data=pd.read_csv(path+file['temp']).iloc[8:]
                 for n in range(len(data)):
                     t=data.iloc[n].str.split(';',expand=True)
                     TRT_ID=int(t[0].values)
@@ -579,4 +579,4 @@ def write_geojson(tower_list,file):
     prop=tower_list.columns
     geojson=df_to_geojson(tower_list,prop)
     with open(file, 'w') as f:
-        dump(feature_collection, f)
+        gs.dump(geojson, f)
