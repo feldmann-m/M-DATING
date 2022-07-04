@@ -434,7 +434,7 @@ def rot_hist(tower_list, hist,time):
     delta=datetime.strptime("25","%M")-datetime.strptime("5","%M")
     for t in range(len(hist)):
         h=hist.iloc[t]
-        if datetime.strptime(str(time), "%y%j%H%M")-datetime.strptime(str(h.latest), "%y%j%H%M")>delta: continue
+        if datetime.strptime(str(time), "%y%j%H%M")-datetime.strptime(str(int(h.latest)), "%y%j%H%M")>delta: continue
         for n in range(len(IDs)):
             if h.ID==IDs[n]:
                 t=tower_list.iloc[n]
@@ -445,8 +445,9 @@ def rot_hist(tower_list, hist,time):
                 if h.dist >= 20: tower_list.dist.iat[n]=1
                 h.latest=int(time)
                 hist2=hist2.append(h)
+            else: hist2=hist2.append(h)
     for n in range(len(IDs)):
-        if IDs[n] not in hist2.ID:
+        if IDs[n] not in list(hist2.ID):
             t=tower_list.iloc[n]
             h=pd.DataFrame(data=None, index=[len(hist2)], columns=["ID","cont","dist","latest"])
             h.ID=IDs[n]

@@ -202,7 +202,7 @@ def elevation_processor(r, el, radar, cartesian, path, specs, coord, files, shea
 
 #%% INITIALIZE PROCESSING
 # load case dates and times, load variables, launch timer
-time='221790730'#sys.argv[1]
+time='221790735'#sys.argv[1]
 event='22179'#sys.argv[2]
 year='2022'#sys.argv[3]
 radar, cartesian, path, specs, files, shear, resolution=variables.vars(event, year)
@@ -284,12 +284,13 @@ for n in range(0,len(result)):
 vert_p, v_ID_p = meso.tower(rotation_pos, newlabels, radar, shear, r, timelist[t], path)
 vert_n, v_ID_n = meso.tower(rotation_neg, newlabels, radar, shear, r, timelist[t], path)
 
-tower_list_p.append(vert_p)
-tower_list_n.append(vert_n)
+# tower_list_p.append(vert_p)
+# tower_list_n.append(vert_n)
 r_toc=timeit.default_timer()
 print("time elapsed [s]: ", r_toc-r_tic)
 t_toc=timeit.default_timer()
 print("Computation time timestep: [s] ",t_toc-t_tic)
+#%%
 phist,nhist=io.read_histfile(path)
 phist,vert_p=meso.rot_hist(vert_p, phist,time)
 nhist,vert_n=meso.rot_hist(vert_n, nhist,time)

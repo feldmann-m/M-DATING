@@ -538,7 +538,8 @@ def get_TRT(ttime, path):
 def write_histfile(phist,nhist,path):
     file=glob.glob(path["temp"]+'ROT/'+'*hist*')
     try: 
-        if len(file)>0:shutil.rmtree(file[0])
+        if len(file)>0:
+            for f in file: os.remove(f)
     except: print("directory "+ str(file)+ " does not exist")
     
     phist.to_csv(path["temp"]+'ROT/'+'phist.txt', header=phist.columns, index=range(len(phist)), sep=';', mode='a')
