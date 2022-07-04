@@ -10,34 +10,13 @@ import pyart
 import numpy as np
 import pandas as pd
 import scipy.ndimage as ndi
+import matplotlib.pyplot as plt
 import copy
 from datetime import datetime
+from datetime import timedelta
+import library.io as io
 #%%
 def mask(mask, coord, radar, cartesian, r, el):
-    """
-    Generates polar binary mask for thunderstorm cells
-
-    Parameters
-    ----------
-    mask : array
-        Cartesian mask.
-    coord : array
-        origin coordinates.
-    #radar : dict
-        radar metadata.
-    cartesian : dict
-        cartesian metadata including radar coordinates.
-    r : int
-        radar number.
-    el : int
-        elevation number.
-
-    Returns
-    -------
-    p_mask : array
-        binary array with thunderstorm mask.
-
-    """
     c_el=coord[el]
     cr_el=np.round(copy.deepcopy(c_el/1000)).astype(int)
     cr_el[0,:,:]+=cartesian["rx"][r]
@@ -52,93 +31,47 @@ def mask(mask, coord, radar, cartesian, r, el):
     
     return p_mask
 
-def pattern_vectors(data, shear, distance):
-    """
-    Identification of 1D pattern vectors
-    contiguous areas in azimuth exceeding shear threshold
-
-    Parameters
-    ----------
-    data : array
-        azimuthal shear.
-    shear: dict
-        contains shear thresholds.
-    distance : array
-        Cartesian azimuthal distance between bins.
-
-    Returns
-    -------
-    shearID : array
-        array with IDs in fields, where pattern vector was identified.
-
-    """
+def pattern_vectors(shear, min_shear_far, min_shear_near, min_length, distance):
+    ##Identification of 1D pattern vectors
+    ##continuous elements with certain azimuthal length
     
     print("Identifying pattern vectors")
-    shear_ID=np.zeros(data.shape)
-    shearID=np.zeros(data.shape)
+    shear_ID=np.zeros(shear.shape)
+    shearID=np.zeros(shear.shape);# shearID[:]=np.nan
     IDpos=1
-    for m in range(0,data.shape[1]):
+    for m in range(0,shear.shape[1]):
         #print (m)
-        for n in range(0,data.shape[0]-2):
-            if n<=40: shear_thresh=shear["near1"]
-            if n<200 and n>40: shear_thresh=shear["near1"]-(shear["near1"]-shear["far1"])*((n-40)/160)
-            if n>=200: shear_thresh=shear["far1"]
-            if all(data[n:n+3,m]>shear_thresh): shear_ID[n:n+3,m]=IDpos
-            elif all(data[n-1:n+2,m]>shear_thresh) and data[n+2,m]<=shear_thresh: IDpos+=1
+        for n in range(0,shear.shape[0]-2):
+            if n<=40: shear_thresh=min_shear_near
+            if n<200 and n>40: shear_thresh=min_shear_near-(min_shear_near-min_shear_far)*((n-40)/160)
+            if n>=200: shear_thresh=min_shear_far
+            # print(n, shear_thresh)
+            if all(shear[n:n+3,m]>shear_thresh): shear_ID[n:n+3,m]=IDpos; # and all(myshear_cor[n:n+3,m]<3)
+            elif all(shear[n-1:n+2,m]>shear_thresh) and shear[n+2,m]<=shear_thresh: IDpos+=1
             
     for n in range(0,IDpos+1):
         indices=np.where(shear_ID==n)
-        if np.sum(distance[indices])<shear["length"]:
+        if np.sum(distance[indices])<min_length:
             shear_ID[shear_ID==n]=0
             
     shearID[shear_ID>0]=1
     
     return shearID
 
+def neighbor_check(n,m,shearID,shear_groups,g_ID,ind):
+    ##recursive function merging positive objects
+    for a in range(n-1,n+2):
+        if a>359:a=a-360
+        for b in range(m-2,m+3):
+            if b>shearID.shape[1]-1:b=shearID.shape[1]-1
+            if shearID[a,b]>0 and shear_groups[a,b]==0:
+                ind=1
+                shear_groups[a,b]=g_ID
+                shear_groups,ind=neighbor_check(a,b,shearID,shear_groups,g_ID,ind)
+                
+    return shear_groups,ind
+
 def shear_group(rotation, sign, myfinaldata, az_shear, labels, resolution, distance, shear, radar, EL, el, R, r, fg_indices, time):
-    """
-    Merging pattern vectors to areas
-    Computing intensity metrics of area
-
-    Parameters
-    ----------
-    rotation : dict
-        storage of rotation signatures.
-    sign : int
-        sign of rotation.
-    myfinaldata : array
-        velocity data.
-    az_shear : array
-        azimuthal velocity shear.
-    labels : float
-        thunderstorm ID.
-    resolution : float
-        radial resolution in km.
-    distance : array
-        azimuthal distance.
-    shear : dict
-        contains shear thresholds for object identification.
-    radar : dict
-        radar metadata.
-    #EL : string
-        elevation name.
-    el : int
-        elevation number.
-    #R : string
-        radar name.
-    r : int
-        radar number.
-    #fg_indices : list## or rewrite into lookup table
-        indices for cartesian transformation.
-    time : int
-        date-time stamp.
-
-    Returns
-    -------
-    rotation : dict
-        storage of all rotation signatures.
-
-    """
     ##merging pattern vectors to areas
     min_width=shear["width"]
     az_shear=sign*az_shear
@@ -149,16 +82,24 @@ def shear_group(rotation, sign, myfinaldata, az_shear, labels, resolution, dista
                                             distance)
     rotation["pattern_vector"]=shearID
     print("Identifying shear areas")
+    # shear_groups=np.zeros(shearID.shape);
+    # g_ID=1;
+    # for n in range(1,shearID.shape[0]-1):
+    #     for m in range(2,shearID.shape[1]-2):
+    #         shear_groups,indp=neighbor_check(n,m,shearID,shear_groups,g_ID,0)
+    #         if indp==1:g_ID+=1
     shear_groups, g_ID = ndi.label(shearID)
     shear_prop=[]
     for n in range(1,g_ID+1):
         indices=np.where(shear_groups==n)
         if len(np.unique(indices[1]))>2:
-            vertical_ID=labels
+            vertical_ID=labels#np.unique(labels[indices])[0]
             size=np.nansum(distance[indices]*resolution)
             vol=np.nansum(distance[indices]*resolution*resolution)
+            # av_ref=np.nanmean(myref[indices])
             cen_r=np.mean(indices[1])
-            if cen_r<=40:
+            # centroids=cen_az, cen_r
+            if cen_r<=40: #min_shear_2=shear["near2"]; min_rvel=shear["rvel1"]; min_vort=shear["vort1"]
                 min_shear_2=shear["near2"]-shear["near2d"]*((40-cen_r)/40)
                 min_rvel=shear["rvel1"]-shear["rvel1d"]*((40-cen_r)/40)
                 min_vort=shear["vort1"]-shear["vort1d"]*((40-cen_r)/40)
@@ -167,6 +108,9 @@ def shear_group(rotation, sign, myfinaldata, az_shear, labels, resolution, dista
                 min_rvel=shear["rvel1"]-shear["rvel1d"]*((cen_r-40)/160)
                 min_vort=shear["vort1"]-shear["vort1d"]*((cen_r-40)/160)
             if cen_r>=200: min_shear_2=shear["near2"]-shear["near2d"]; min_rvel=shear["rvel1"]-shear["rvel1d"]; min_vort=shear["vort1"]-shear["vort1d"]
+            # print(cen_r,min_shear_2,min_rvel,min_vort)
+            # magnitude_2=np.abs(np.sum(az_shear[indices]))*resolution
+            # print(n,g_ID,cen_r,min_vort,min_rvel)
             maxshear=max(az_shear[indices],key=abs)
             binary=np.zeros(myfinaldata.shape)
             binary[:]=np.nan
@@ -175,6 +119,8 @@ def shear_group(rotation, sign, myfinaldata, az_shear, labels, resolution, dista
             ma=np.nanmax(filt); mi=np.nanmin(filt)
             dvel=abs(ma-mi)/2
             lmax=np.where(filt==ma); lmin=np.where(filt==mi)
+            # mmax=np.nanmean(lmax[0]), np.nanmean(lmax[1])
+            # mmin=np.nanmean(lmin[0]), np.nanmean(lmin[1])
             xmax,ymax,zmax=pyart.core.antenna_to_cartesian(lmax[1], lmax[0], el)
             xmin,ymin,zmin=pyart.core.antenna_to_cartesian(lmin[1], lmin[0], el)
             dis=np.array([])
@@ -186,6 +132,7 @@ def shear_group(rotation, sign, myfinaldata, az_shear, labels, resolution, dista
             if np.isnan(dvel): dvel=0
             vec_width=[]
             for m in np.unique(indices[1]):
+                #if m >359: m=359
                 a=len(np.where(indices[1]==m)[0])
                 vec_width.append(distance[0,m]*a)
             maxwidth=np.nanmax(vec_width)
@@ -200,7 +147,9 @@ def shear_group(rotation, sign, myfinaldata, az_shear, labels, resolution, dista
                 print("rotation characteristics:", dvel, vort, dis)
                 x=[]; y=[]; z=[];
                 for n in range(len(indices[0])):
+                    #print(r, n, indices[1][n], indices[0][n])
                     cart_indices=pyart.core.antenna_to_cartesian(indices[1][n]/2, indices[0][n], el)
+                    #cart_indices=fg_indices[r][indices[1][n], indices[0][n], el]
                     x.append(cart_indices[0])
                     y.append(cart_indices[1])
                     z.append(cart_indices[2])
@@ -212,40 +161,58 @@ def shear_group(rotation, sign, myfinaldata, az_shear, labels, resolution, dista
     shear_prop=pd.DataFrame(data=shear_prop, columns=["ID", "time", "elevation", "radar", "indices", "x", "y", "z", "dvel", "vort", "diam", "rank", "v_ID", "size", "vol", "range"])
     print(shear_prop)
     print("Identified shear areas: ", len(shear_prop))
+    # if len(rotation["prop"]) and rotation["prop"].elevation.iloc[-1]==el:
+    #     rotation["shear_objects"][-1]=np.nansum([rotation["shear_objects"][-1],sheargroups],axis=0)
+    #     rotation["shear_ID"][-1]=np.nansum([rotation["shear_ID"][-1],shear_groups],axis=0)
+    # else:
+    # rotation["shear_ID"].append(shear_groups)
+    # rotation["shear_objects"].append(sheargroups)
     rotation["prop"]=pd.concat([rotation["prop"],shear_prop], ignore_index=True)
     
     
     return rotation
 
+def prox_rec(N, n, prop, p_ID):
+    print("entering recursion")
+    for M in range(N+1,n):
+        dx=np.abs(prop.x[N] - prop.x[M])
+        dy=np.abs(prop.y[N] - prop.y[M])
+        distance=np.sqrt(dx*dx + dy*dy)
+        if distance<5000:
+            #print(distance, p_ID)
+            prop.v_ID[N]=p_ID
+            prop.v_ID[M]=p_ID
+            if M<n-1:
+                prox_rec(M, n, prop, p_ID)
+    return prop
+
+def proximity_check(rotation, radar):
+    ##general x, y proximity check between shear areas
+    print("checking for proximity")
+    p_ID=1
+    prop=rotation["prop"].copy()
+    n=len(prop)
+    for N in range(n):
+        if prop.v_ID[N]<1:
+            prop = prox_rec(N, n, prop, p_ID)
+            p_ID+=1
+                    
+    return prop, p_ID
+
+def cell_assignment(rotation, areas, radar,r):
+    print("checking for cells")
+    prop=rotation["prop"].copy()
+    n=len(prop)
+    for N in range(n):
+        x=int((prop.x[N]+radar["x"][r]-254000)/1000)
+        y=int((prop.y[N]+radar["y"][r]+159000)/1000)
+        c_ID=areas[y,x]
+        prop.v_ID[N]=c_ID
+        # print(c_ID)
+                    
+    return prop, c_ID
+
 def tower(rotation, areas, radar, shear, r, time, path):
-    """
-    Merging of identified objects within the same thunderstorm cell
-
-    Parameters
-    ----------
-    rotation : dict
-        all identified rotation objects.
-    areas : array
-        thunderstorm IDs.
-    #radar : dict
-        radar metadata.
-    shear : dict
-        contains vertical continuity thresholds.
-    #r : int
-        radar number.
-    time : int
-        date-time-stamp.
-    path : dict
-        path definitions.
-
-    Returns
-    -------
-    towers : pandas dataframe
-        rotation metrics for analyzed timestep sorted by thunderstorm ID.
-    v_ID : array
-        thunderstorm IDs with rotation.
-
-    """
     ##merging vertically close objects
     print("vertical towers")
     if len(rotation["prop"])<2:
@@ -260,10 +227,13 @@ def tower(rotation, areas, radar, shear, r, time, path):
                                 ])
         v_ID=0
         return towers, v_ID
+    # prop, v_ID=cell_assignment(rotation, areas, radar,r)
     
     prop=rotation["prop"].copy()
     v_ID=prop["v_ID"].values
     print("building towers")
+    # n=int(max(prop["v_ID"].values)+1)
+    # m=int(min(prop["v_ID"].values)+1)
     n=np.unique(prop["v_ID"].values)
     print(n)
     towers=pd.DataFrame(data=0.0, index=n, columns=["ID", "time", "radar","x", "y", "dz",
@@ -278,8 +248,11 @@ def tower(rotation, areas, radar, shear, r, time, path):
     for ID in n:
         obj=prop.where(prop["v_ID"]==ID).dropna()
         if len(obj)<1: continue
+        # tow=obj.drop(columns=['x','y','z','weight','ID'])
+        name=path["images"]+str(time)+'_'+str(ID)+radar["radars"][r]+'.txt'
+        # io.write_track(tow, name)
         towers["ID"][ID]=ID
-        towers["radar"][ID]=np.unique(obj["radar"].values)
+        towers["radar"][ID]=np.unique(obj["radar"].values) #obj["radar"].values.tolist()
         r_range=[]
         r_elev=[]
         r_n=[]
@@ -313,7 +286,13 @@ def tower(rotation, areas, radar, shear, r, time, path):
                 towers["W_range"][ID]=np.average(o["range"], weights=o["size"])*0.5
                 towers["W_n"][ID]=len(o["vol"])
                 towers["W_el"][ID]=len(np.unique(o["elevation"]))
-                
+        # towers.range[ID]=np.average(obj["range"], weights=obj["size"])*0.5
+        # towers["n_objects"][ID]=len(obj["vol"])
+        # towers["n_elev"][ID]=len(np.unique(obj["elevation"]))
+        
+        # towers["range"][ID]=r_range
+        # towers["n_objects"][ID]=r_n
+        # towers["n_elev"][ID]=r_elev
         ra=np.nanmin([towers.A_range,towers.D_range,towers.L_range,towers.P_range,towers.W_range])
         if ra>100:
             dz_min=shear["zu"]-shear["zd"]
@@ -328,92 +307,93 @@ def tower(rotation, areas, radar, shear, r, time, path):
             vort_max=shear["vortu"]-shear["vortd"]*((20-ra)/20)
             rot_max=shear["rotu"]-shear["rotd"]*((20-ra)/20)
         print(ra,dz_min,vort_max,rot_max)
+        # if np.max(obj["dvel"])< rot_max or np.max(obj["vort"])<vort_max: towers["r_100"][ID]=np.nan; continue
         towers["dz"][ID]=max(obj["z"])-min(obj["z"])
-        if towers["dz"][ID]<dz_min: towers.loc[ID]=np.nan
-        else:
-            towers["z_0"][ID]=np.nanmin(obj["z"])
-            towers["z_10"][ID]=np.percentile(obj["z"],10)
-            towers["z_25"][ID]=np.percentile(obj["z"],25)
-            towers["z_50"][ID]=np.percentile(obj["z"],50)
-            towers["z_75"][ID]=np.percentile(obj["z"],75)
-            towers["z_90"][ID]=np.percentile(obj["z"],90)
-            towers["z_100"][ID]=np.nanmax(obj["z"])
-            towers["z_IQR"][ID]=np.percentile(obj["z"],75)-np.percentile(obj["z"],25)
-            towers["z_mean"][ID]=np.nanmean(obj["z"])
-            
-            towers["d_0"][ID]=np.nanmin(obj["diam"])
-            towers["d_10"][ID]=np.percentile(obj["diam"],10)
-            towers["d_25"][ID]=np.percentile(obj["diam"],25)
-            towers["d_50"][ID]=np.percentile(obj["diam"],50)
-            towers["d_75"][ID]=np.percentile(obj["diam"],75)
-            towers["d_90"][ID]=np.percentile(obj["diam"],90)
-            towers["d_100"][ID]=np.nanmax(obj["diam"])
-            towers["d_IQR"][ID]=np.percentile(obj["diam"],75)-np.percentile(obj["diam"],25)
-            towers["d_mean"][ID]=np.nanmean(obj["diam"])
-            
-            towers["r_0"][ID]=np.nanmin(obj["dvel"])
-            towers["r_10"][ID]=np.percentile(obj["dvel"],10)
-            towers["r_25"][ID]=np.percentile(obj["dvel"],25)
-            towers["r_50"][ID]=np.percentile(obj["dvel"],50)
-            towers["r_75"][ID]=np.percentile(obj["dvel"],75)
-            towers["r_90"][ID]=np.percentile(obj["dvel"],90)
-            towers["r_100"][ID]=np.nanmax(obj["dvel"])
-            towers["r_IQR"][ID]=np.percentile(obj["dvel"],75)-np.percentile(obj["dvel"],25)
-            towers["r_mean"][ID]=np.nanmean(obj["dvel"])
-            
-            towers["v_0"][ID]=np.nanmin(obj["vort"])
-            towers["v_10"][ID]=np.percentile(obj["vort"],10)
-            towers["v_25"][ID]=np.percentile(obj["vort"],25)
-            towers["v_50"][ID]=np.percentile(obj["vort"],50)
-            towers["v_75"][ID]=np.percentile(obj["vort"],75)
-            towers["v_90"][ID]=np.percentile(obj["vort"],90)
-            towers["v_100"][ID]=np.nanmax(obj["vort"])
-            towers["v_IQR"][ID]=np.percentile(obj["vort"],75)-np.percentile(obj["vort"],25)
-            towers["v_mean"][ID]=np.nanmean(obj["vort"])
-            
-            towers["rank_0"][ID]=np.nanmin(obj["rank"])
-            towers["rank_10"][ID]=np.percentile(obj["rank"],10)
-            towers["rank_25"][ID]=np.percentile(obj["rank"],25)
-            towers["rank_50"][ID]=np.percentile(obj["rank"],50)
-            towers["rank_75"][ID]=np.percentile(obj["rank"],75)
-            towers["rank_90"][ID]=np.percentile(obj["rank"],90)
-            towers["rank_100"][ID]=np.nanmax(obj["rank"])
-            towers["rank_IQR"][ID]=np.percentile(obj["rank"],75)-np.percentile(obj["rank"],25)
-            towers["rank_mean"][ID]=np.nanmean(obj["rank"])
-            
-            towers["size_sum"][ID]=np.sum(obj["size"])
-            towers["size_mean"][ID]=np.nanmean(obj["size"])
-            towers["vol_sum"][ID]=np.sum(obj["vol"])
-            towers["vol_mean"][ID]=np.nanmean(obj["vol"])
-            
-            towers["x"][ID]=np.average(obj["x"], weights=obj["size"])
-            towers["y"][ID]=np.average(obj["y"], weights=obj["size"])
-            towers["dz"][ID]=max(obj["z"])-min(obj["z"])
-            towers["time"][ID]=time
+        if towers["dz"][ID]<dz_min: towers.loc[ID]=np.nan; continue
+        
+        towers["z_0"][ID]=np.nanmin(obj["z"])
+        towers["z_10"][ID]=np.percentile(obj["z"],10)
+        towers["z_25"][ID]=np.percentile(obj["z"],25)
+        towers["z_50"][ID]=np.percentile(obj["z"],50)
+        towers["z_75"][ID]=np.percentile(obj["z"],75)
+        towers["z_90"][ID]=np.percentile(obj["z"],90)
+        towers["z_100"][ID]=np.nanmax(obj["z"])
+        towers["z_IQR"][ID]=np.percentile(obj["z"],75)-np.percentile(obj["z"],25)
+        towers["z_mean"][ID]=np.nanmean(obj["z"])
+        
+        towers["d_0"][ID]=np.nanmin(obj["diam"])
+        towers["d_10"][ID]=np.percentile(obj["diam"],10)
+        towers["d_25"][ID]=np.percentile(obj["diam"],25)
+        towers["d_50"][ID]=np.percentile(obj["diam"],50)
+        towers["d_75"][ID]=np.percentile(obj["diam"],75)
+        towers["d_90"][ID]=np.percentile(obj["diam"],90)
+        towers["d_100"][ID]=np.nanmax(obj["diam"])
+        towers["d_IQR"][ID]=np.percentile(obj["diam"],75)-np.percentile(obj["diam"],25)
+        towers["d_mean"][ID]=np.nanmean(obj["diam"])
+        
+        towers["r_0"][ID]=np.nanmin(obj["dvel"])
+        towers["r_10"][ID]=np.percentile(obj["dvel"],10)
+        towers["r_25"][ID]=np.percentile(obj["dvel"],25)
+        towers["r_50"][ID]=np.percentile(obj["dvel"],50)
+        towers["r_75"][ID]=np.percentile(obj["dvel"],75)
+        towers["r_90"][ID]=np.percentile(obj["dvel"],90)
+        towers["r_100"][ID]=np.nanmax(obj["dvel"])
+        towers["r_IQR"][ID]=np.percentile(obj["dvel"],75)-np.percentile(obj["dvel"],25)
+        towers["r_mean"][ID]=np.nanmean(obj["dvel"])
+        
+        towers["v_0"][ID]=np.nanmin(obj["vort"])
+        towers["v_10"][ID]=np.percentile(obj["vort"],10)
+        towers["v_25"][ID]=np.percentile(obj["vort"],25)
+        towers["v_50"][ID]=np.percentile(obj["vort"],50)
+        towers["v_75"][ID]=np.percentile(obj["vort"],75)
+        towers["v_90"][ID]=np.percentile(obj["vort"],90)
+        towers["v_100"][ID]=np.nanmax(obj["vort"])
+        towers["v_IQR"][ID]=np.percentile(obj["vort"],75)-np.percentile(obj["vort"],25)
+        towers["v_mean"][ID]=np.nanmean(obj["vort"])
+        
+        towers["rank_0"][ID]=np.nanmin(obj["rank"])
+        towers["rank_10"][ID]=np.percentile(obj["rank"],10)
+        towers["rank_25"][ID]=np.percentile(obj["rank"],25)
+        towers["rank_50"][ID]=np.percentile(obj["rank"],50)
+        towers["rank_75"][ID]=np.percentile(obj["rank"],75)
+        towers["rank_90"][ID]=np.percentile(obj["rank"],90)
+        towers["rank_100"][ID]=np.nanmax(obj["rank"])
+        towers["rank_IQR"][ID]=np.percentile(obj["rank"],75)-np.percentile(obj["rank"],25)
+        towers["rank_mean"][ID]=np.nanmean(obj["rank"])
+        
+        towers["size_sum"][ID]=np.sum(obj["size"])
+        towers["size_mean"][ID]=np.nanmean(obj["size"])
+        towers["vol_sum"][ID]=np.sum(obj["vol"])
+        towers["vol_mean"][ID]=np.nanmean(obj["vol"])
+        
+        #towers["shearsum_max"][ID]=np.max(obj["shearsum"])
+        towers["x"][ID]=np.average(obj["x"], weights=obj["size"])#+radar["x"][r]
+        towers["y"][ID]=np.average(obj["y"], weights=obj["size"])#+radar["y"][r]
+        towers["dz"][ID]=max(obj["z"])-min(obj["z"])
+        # if towers["dz"][ID]<dz_min: towers["dz"][ID]=np.nan
+        towers["time"][ID]=time
     towers=towers.dropna()
     print("Towers found: ", len(towers))
     print(towers)
         
     return towers, v_ID
 
+def drop_duplicates(towers):
+    ##merging duplicate objects after merging radars
+    for n_obj in range(0,towers.shape[0]):
+        #row = towers.iloc[n_obj]
+        dx=np.abs(towers["centroid_cart"][n_obj][0] - towers["centroid_cart"][:][0])
+        dy=np.abs(towers["centroid_cart"][n_obj][1] - towers["centroid_cart"][:][1])
+        distance = np.sqrt(dx*dx + dy*dy)
+        equal = np.where(distance < 2)
+        towers["radar"][n_obj]=[towers["radar"][equal]]
+        towers["rvel_max"][n_obj]=max(np.array(towers["rvel_max"][equal]))
+        towers["shearsum_max"][n_obj]=max(np.array(towers["shearsum_max"][equal]))
+        towers["depth"][n_obj]=max(np.array(towers["depth"][equal]))
+        towers.drop(n_obj, axis=0)
+    return towers
 
 def summarise_rot(tower_list, ID_list):
-    """
-    Converts list of dataframes per timestep into dataframes sorted by ID, temporal continuity check
-
-    Parameters
-    ----------
-    tower_list : list
-        list of dataframes with rotation detections per timestep.
-    ID_list : list
-        list of rotation / thunderstorm IDs.
-
-    Returns
-    -------
-    rotation : pandas dataframe
-        rotation metrics per thunderstorm ID.
-
-    """
     delta=datetime.strptime("15","%M")-datetime.strptime("5","%M")
     rotation=pd.DataFrame()
     
@@ -435,42 +415,45 @@ def summarise_rot(tower_list, ID_list):
             if len(myrot)>0: tl.append(datetime.strptime(str(myrot.time.astype(int).values[0]), "%y%j%H%M"))
         dt=np.diff(tl)
         close=np.where(dt<=delta)
+        # if len(rot_track)<2 or all(dt>delta):continue
+        # if len(rot_track)<1: continue
         ranges=rot_track.A_range.append([rot_track.D_range,rot_track.L_range,rot_track.P_range,rot_track.W_range])
+        # ranges=pd.DataFrame.from_records(rot_track.range.to_numpy())
         if len(close[0])<3 or np.nanmax(ranges)<20: continue
         else: rotation=rotation.append(rot_track)
     return rotation
 
-def rot_hist(tower_list, hist):
-    hist2=pd.DataFrame(data=None, index=None, columns=["ID","rotdir","cont","dis","last"])
+def rot_hist(tower_list, hist,time):
+    hist2=pd.DataFrame(data=None, index=None, columns=["ID","cont","dist","latest"])
     IDs=np.unique(tower_list.ID)
     fill=np.zeros(len(tower_list))
     tower_list["cont"]=fill
-    tower_list["loc"]=fill
+    tower_list["dist"]=fill
     tower_list["flag"]=fill
-    time=tower_list.time[0]
+    # time=tower_list.time.iloc[0]
     delta=datetime.strptime("25","%M")-datetime.strptime("5","%M")
     for t in range(len(hist)):
-        h=hist[t]
-        if datetime.strptime(str(time.astype(int).values[0]), "%y%j%H%M")-datetime.strptime(str(h.last.astype(int).values[0]), "%y%j%H%M")>delta: continue
+        h=hist.iloc[t]
+        if datetime.strptime(str(time), "%y%j%H%M")-datetime.strptime(str(h.latest), "%y%j%H%M")>delta: continue
         for n in range(len(IDs)):
             if h.ID==IDs[n]:
-                t=tower_list[n]
+                t=tower_list.iloc[n]
                 rr=np.nanmax([t.A_range,t.D_range,t.L_range,t.P_range,t.W_range])
                 h.cont+=1
-                if h.cont >= 3: tower_list.iloc[n].cont=1
-                h.dis=np.nanmax([rr,h.dis])
-                if h.dis >= 20: tower_list.iloc[n].loc=1
-                h.last=time
+                if h.cont >= 3: tower_list.cont.iat[n]=1
+                h.dist=np.nanmax([rr,h.dist])
+                if h.dist >= 20: tower_list.dist.iat[n]=1
+                h.latest=int(time)
                 hist2=hist2.append(h)
     for n in range(len(IDs)):
         if IDs[n] not in hist2.ID:
-            t=tower_list[n]
-            h=pd.DataFrame(data=None, index=len(hist2), columns=["ID","rotdir","cont","dis","last"])
+            t=tower_list.iloc[n]
+            h=pd.DataFrame(data=None, index=[len(hist2)], columns=["ID","cont","dist","latest"])
             h.ID=IDs[n]
             h.cont=0
-            h.dis=np.nanmax([t.A_range,t.D_range,t.L_range,t.P_range,t.W_range])
-            if h.dis >= 20: tower_list.iloc[n].loc=1
-            h.last=time
+            h.dist=np.nanmax([t.A_range,t.D_range,t.L_range,t.P_range,t.W_range])
+            if h.dist.values[0] >= 20: tower_list.dist.iat[n]=1
+            h.latest=int(time)
             hist2=hist2.append(h)
-    tower_list.flag=tower_list.cont*tower_list.loc
+    tower_list.flag=tower_list.cont*tower_list.dist
     return hist2,tower_list

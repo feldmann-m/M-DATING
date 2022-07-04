@@ -18,8 +18,9 @@ import pandas as pd
 from zipfile import ZipFile
 import shutil
 from skimage.draw import polygon
-import transform
+import library.transform as transform
 import geojson as gs
+import glob
 #%%
 def blockPrint():
     """
@@ -487,7 +488,7 @@ def TRT_to_grid(year, event, path):
             if np.nansum(cells.flatten())>0:cellist.append(cells); timelist.append(time)
     return cellist, timelist
 
-def get_TRT(time, path):
+def get_TRT(ttime, path):
     """
     Extracts contours from TRT cells and produces gridded product for entire day
 
@@ -511,44 +512,49 @@ def get_TRT(time, path):
     o_x=254000
     o_y=-159000
     lx=710; ly=640
-    
+    # cells=np.zeros([ly,lx])
     #cpath='/store/mch/msrad/radar/swiss/data/'+year+'/'+event
     cellist=[]; timelist=[]
-    for r, d, f in os.walk(path['temp']):
-        f=sorted(f,key=str.lower)
-        for file in f:
-            if time in file and 'TRT' in file:
-                cells=np.zeros([ly,lx])
-                print(file)
-                data=pd.read_csv(path+file['temp']).iloc[8:]
-                for n in range(len(data)):
-                    t=data.iloc[n].str.split(';',expand=True)
-                    TRT_ID=int(t[0].values)
-                    time=int(t[1].values)
-                    tt=np.array(t)[0,27:-1]
-                    tt=np.reshape(tt,[int(len(tt)/2),2])
-                    tlat=tt[:,1].astype(float); tlon=tt[:,0].astype(float)
-                    chx,chy=transform.c_transform(tlon,tlat)
-                    ix=np.round((chx-o_x)/1000).astype(int)
-                    iy=np.round((chy-o_y)/1000).astype(int)
-                    rr, cc = polygon(iy, ix, cells.shape)
-                    cells[rr,cc]=int(t[0].values);
-            if np.nansum(cells.flatten())>0:cellist.append(cells); timelist.append(time)
+    cells=np.zeros([ly,lx])
+    file=glob.glob(path["temp"]+'TRT/*'+ttime+'*'+'.trt')[0]
+    cells=np.zeros([ly,lx])
+    print(file)
+    data=pd.read_csv(file).iloc[8:]
+    for n in range(len(data)):
+        t=data.iloc[n].str.split(';',expand=True)
+        TRT_ID=int(t[0].values)
+        time=int(t[1].values)
+        tt=np.array(t)[0,82:-1]
+        tt=np.reshape(tt,[int(len(tt)/2),2])
+        tlat=tt[:,1].astype(float); tlon=tt[:,0].astype(float)
+        chx,chy=transform.c_transform(tlon,tlat)
+        ix=np.round((chx-o_x)/1000).astype(int)
+        iy=np.round((chy-o_y)/1000).astype(int)
+        rr, cc = polygon(iy, ix, cells.shape)
+        cells[rr,cc]=int(t[0].values);
+    if np.nansum(cells.flatten())>0:cellist.append(cells); timelist.append(ttime)
     return cellist, timelist
 
 def write_histfile(phist,nhist,path):
+    file=glob.glob(path["temp"]+'ROT/'+'*hist*')
+    try: 
+        if len(file)>0:shutil.rmtree(file[0])
+    except: print("directory "+ str(file)+ " does not exist")
     
-    try: shutil.rmtree(path["hist"])
-    except: print("directory "+ path["hist"]+ " does not exist")
-    
-    phist.to_csv(path["temp"]+'phist.txt', header=phist.columns, index=range(len(phist)), sep=';', mode='a')
-    nhist.to_csv(path["temp"]+'nhist.txt', header=nhist.columns, index=range(len(nhist)), sep=';', mode='a')
+    phist.to_csv(path["temp"]+'ROT/'+'phist.txt', header=phist.columns, index=range(len(phist)), sep=';', mode='a')
+    nhist.to_csv(path["temp"]+'ROT/'+'nhist.txt', header=nhist.columns, index=range(len(nhist)), sep=';', mode='a')
     
 def read_histfile(path):
-    phist=pd.read_csv(path["hist"]+'phist.txt', sep=';')
-    phist= phist.drop(columns='Unnamed: 0')
-    nhist=pd.read_csv(path["hist"]+'nhist.txt', sep=';')
-    nhist= nhist.drop(columns='Unnamed: 0')
+    try:
+        phist=pd.read_csv(path["temp"]+'ROT/'+'phist.txt', sep=';')
+        phist= phist.drop(columns='Unnamed: 0')
+    except:
+        phist=pd.DataFrame(data=None, index=None, columns=["ID","cont","dis","latest"])
+    try:
+        nhist=pd.read_csv(path["temp"]+'ROT/'+'nhist.txt', sep=';')
+        nhist= nhist.drop(columns='Unnamed: 0')
+    except:
+        nhist=pd.DataFrame(data=None, index=None, columns=["ID","cont","dis","latest"])
     return phist,nhist
 
 def df_to_geojson(df, properties, lat='x', lon='y'):
@@ -576,7 +582,8 @@ def df_to_geojson(df, properties, lat='x', lon='y'):
     return geojson
 
 def write_geojson(tower_list,file):
-    prop=tower_list.columns
-    geojson=df_to_geojson(tower_list,prop)
+    prop=list(tower_list.columns)
+    prop.remove('radar')
+    data=df_to_geojson(tower_list,prop)
     with open(file, 'w') as f:
-        gs.dump(geojson, f)
+        gs.dump(data['features'], f)

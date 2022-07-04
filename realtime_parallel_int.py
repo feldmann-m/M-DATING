@@ -202,9 +202,9 @@ def elevation_processor(r, el, radar, cartesian, path, specs, coord, files, shea
 
 #%% INITIALIZE PROCESSING
 # load case dates and times, load variables, launch timer
-time=sys.argv[1]
-event=sys.argv[2]
-year=sys.argv[3]
+time='221790730'#sys.argv[1]
+event='22179'#sys.argv[2]
+year='2022'#sys.argv[3]
 radar, cartesian, path, specs, files, shear, resolution=variables.vars(event, year)
 coord=variables.mask_coord(radar)
 io.makedir(path)
@@ -294,8 +294,8 @@ phist,nhist=io.read_histfile(path)
 phist,vert_p=meso.rot_hist(vert_p, phist,time)
 nhist,vert_n=meso.rot_hist(vert_n, nhist,time)
 io.write_histfile(phist,nhist,path)
-pfile=path["temp"]+'ROT/'+'PROT'+str(year)+str(event)+str(time)+'.geojson'
+pfile=path["temp"]+'ROT/'+'PROT'+str(year)+str(event)+str(time)+'.json'
 io.write_geojson(vert_p,pfile)
-nfile=path["temp"]+'ROT/'+'NROT'+str(year)+str(event)+str(time)+'.geojson'
+nfile=path["temp"]+'ROT/'+'NROT'+str(year)+str(event)+str(time)+'.json'
 io.write_geojson(vert_n,nfile)
 

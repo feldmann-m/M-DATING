@@ -10,6 +10,7 @@ import numpy as np
 import numpy.matlib as npm
 from netCDF4 import Dataset
 import pandas as pd
+import pyart
 
 #%%
 def vars(event, year):
@@ -33,7 +34,7 @@ def vars(event, year):
         "x": np.arange(297000,906000,1000),
         "y": np.arange(-100000,437000,1000),
         "z": np.arange(0,20000,100),
-        # "indices": [],
+        "indices": [],
         "radar_ID": ['index_A','index_D','index_L','index_P','index_W'],
         "ox": 255000,
         "oy": -160000,
@@ -58,7 +59,8 @@ def vars(event, year):
         "files": '/store/mch/msrad/mfeldman/file_med/'+event+'/',
         "event": event,
         "archive": '/store/msrad/radar/swiss/data/'+year+'/',
-        "temp": '/scratch/mfeldman/temp_rot/'+event+'/',
+        #"temp": '/scratch/mfeldman/temp_rot/'+event+'/',
+        "temp": '/scratch/mfeldman/realtime/',
         "r2d2": '/store/mch/msrad/mfeldman/'+year+'/'
     }
     
@@ -114,3 +116,33 @@ def distance(myfinaldata, resolution):
     distance=np.divide(np.multiply(distance,2*np.pi),360)
     distance=npm.repmat(distance,myfinaldata.shape[0],1)
     return distance
+
+def time(file):
+    dtime=file[-15:-6]
+    yr=dtime[0:2]; dy=dtime[2:5]; hr=dtime[5:7]; mn=dtime[7:9]
+    tstamp = '_' + str(yr) + '_' + str(dy) + '_' + str(hr) + str(mn); #timestamp as string
+    time={
+        "datetime": dtime,
+        "tstamp": tstamp,
+        "year": yr,
+        "day": dy,
+        "hour": hr,
+        "min": mn
+    }
+    return time
+#%%
+def mask_coord(radar):
+    azimuths=np.arange(0,360,1)
+    coord=[]
+    for e in range(20):
+        el=radar['angles'][e]
+        print(el)
+        ranges=np.arange(0.25,radar["elevation_ranges"][e],0.5)
+        c=np.zeros([2,len(azimuths),len(ranges)])
+        for r in range(len(ranges)):
+            for az in azimuths:
+                x,y,z=pyart.core.antenna_to_cartesian(ranges[r], az, el)
+                c[0,az,r]=x
+                c[1,az,r]=y
+        coord.append(c)
+    return coord
