@@ -11,7 +11,7 @@ import numpy as np
 import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
-import nmmn.plots
+#import nmmn.plots
 import shapefile
 
 
@@ -111,8 +111,8 @@ def plot_cart_scatter(myfinaldata, xp, yp, sp, xn, yn, sn, colorp, colorn, conto
     xn = (xn - o_x)/1000
     yp = (yp - o_y)/1000
     yn = (yn - o_y)/1000
-    turbo=nmmn.plots.turbocmap()
-    cmap=turbo
+    #turbo=nmmn.plots.turbocmap()
+    cmap='turbo'
     cmap.set_under(color='gray')
     p0=plt.pcolormesh(myfinaldata, vmin=0, vmax=60, cmap=cmap)
     plt.colorbar(p0, cmap=cmap,  boundaries=np.arange(0,70,5), ticks=np.arange(0,70,5), extend='both', orientation='vertical',shrink=0.7)

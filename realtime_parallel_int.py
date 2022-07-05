@@ -202,7 +202,7 @@ def elevation_processor(r, el, radar, cartesian, path, specs, coord, files, shea
 
 #%% INITIALIZE PROCESSING
 # load case dates and times, load variables, launch timer
-time='221790735'#sys.argv[1]
+time='221790720'#sys.argv[1]
 event='22179'#sys.argv[2]
 year='2022'#sys.argv[3]
 radar, cartesian, path, specs, files, shear, resolution=variables.vars(event, year)
