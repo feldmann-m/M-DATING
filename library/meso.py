@@ -446,9 +446,9 @@ def rot_hist(tower_list, hist,time):
                 h.dist=np.nanmax([rr,h.dist])
                 if h.dist >= 20: tower_list.dist.iat[n]=1
                 h.latest=int(time)
-                hist2=hist2.append(h)
+                hist2=pd.concat([hist2,h])
         if a==0:
-            hist2=hist2.append(h)
+            hist2=pd.concat([hist2,h])
     for n in range(len(IDs)):
         if IDs[n] not in list(hist2.ID):
             t=tower_list.iloc[n]
@@ -458,6 +458,6 @@ def rot_hist(tower_list, hist,time):
             h.dist=np.nanmax([t.A_range,t.D_range,t.L_range,t.P_range,t.W_range])
             if h.dist.values[0] >= 20: tower_list.dist.iat[n]=1
             h.latest=int(time)
-            hist2=hist2.append(h)
+            hist2=pd.concat([hist2,h])
     tower_list.flag=tower_list.cont*tower_list.dist
     return hist2,tower_list

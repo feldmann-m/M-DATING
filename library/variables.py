@@ -145,4 +145,14 @@ def mask_coord(radar):
                 c[0,az,r]=x
                 c[1,az,r]=y
         coord.append(c)
+        np.save('mask_data/mask'+str(el)+'.npy',c)
+    return coord
+
+def read_mask(radar):
+    azimuths=np.arange(0,360,1)
+    coord=[]
+    for e in range(20):
+        el=radar['angles'][e]
+        c=np.load('mask_data/mask'+str(el)+'.npy')
+        coord.append(c)
     return coord

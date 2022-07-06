@@ -12,10 +12,12 @@ import os
 import sys
 sys.path.append('/users/mfeldman/scripts/ELDES_MESO')
 import pandas as pd
+pd.options.mode.chained_assignment = None
 import skimage.morphology as skim
 import warnings
 from astropy.utils.exceptions import AstropyWarning
 warnings.simplefilter('ignore',category=AstropyWarning)
+#warnings.simplefilter(action='ignore', category=SettingWithCopyWarning)
 import timeit
 import library.variables as variables
 import library.io as io
@@ -202,11 +204,11 @@ def elevation_processor(r, el, radar, cartesian, path, specs, coord, files, shea
 
 #%% INITIALIZE PROCESSING
 # load case dates and times, load variables, launch timer
-time='221790720'#sys.argv[1]
+time='221790730'#sys.argv[1]
 event='22179'#sys.argv[2]
 year='2022'#sys.argv[3]
 radar, cartesian, path, specs, files, shear, resolution=variables.vars(event, year)
-coord=variables.mask_coord(radar)
+coord=variables.read_mask(radar)
 io.makedir(path)
 
 
@@ -221,7 +223,7 @@ trt_cells, timelist= io.get_TRT(time,path)
 t_tic=timeit.default_timer()
 #doy=timelist[t][:5]
 labels=trt_cells[t]
-newlabels=skim.dilation(labels,selem=np.ones([5,5]))
+newlabels=skim.dilation(labels,footprint=np.ones([5,5]))
 mask=newlabels>0
 
 t_toc=timeit.default_timer()
