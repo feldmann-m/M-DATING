@@ -11,6 +11,7 @@ import numpy as np
 import os
 import sys
 sys.path.append('/users/mfeldman/scripts/ELDES_MESO')
+sys.path.append('/scratch/lom/mof/code/ELDES_MESO')
 import pandas as pd
 pd.options.mode.chained_assignment = None
 import skimage.morphology as skim
@@ -208,7 +209,7 @@ event=sys.argv[2]
 year=sys.argv[3]
 radar, cartesian, path, specs, files, shear, resolution=variables.vars(event, year)
 coord=variables.read_mask(radar)
-io.makedir(path)
+#io.makedir(path)
 
 
 tower_list_p=[]

@@ -1,4 +1,4 @@
-name: rts
+name: meso
 channels:
   - conda-forge
   - defaults

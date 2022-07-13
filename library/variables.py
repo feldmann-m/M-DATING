@@ -60,7 +60,8 @@ def vars(event, year):
         "event": event,
         "archive": '/store/msrad/radar/swiss/data/'+year+'/',
         #"temp": '/scratch/mfeldman/temp_rot/'+event+'/',
-        "temp": '/scratch/mfeldman/realtime/',
+        #"temp": '/scratch/mfeldman/realtime/',
+        "temp": '/scratch/lom/mof/realtime/',
         "r2d2": '/store/mch/msrad/mfeldman/'+year+'/'
     }
     

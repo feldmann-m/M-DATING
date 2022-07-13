@@ -516,6 +516,8 @@ def get_TRT(ttime, path):
     #cpath='/store/mch/msrad/radar/swiss/data/'+year+'/'+event
     cellist=[]; timelist=[]
     cells=np.zeros([ly,lx])
+    fil=path["temp"]+'TRT/*'+ttime+'*'+'.trt'; print(fil)
+    file=glob.glob(path["temp"]+'TRT/*'+ttime+'*'+'.trt'); print(file)
     file=glob.glob(path["temp"]+'TRT/*'+ttime+'*'+'.trt')[0]
     cells=np.zeros([ly,lx])
     print(file)
