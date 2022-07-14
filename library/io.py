@@ -516,8 +516,6 @@ def get_TRT(ttime, path):
     #cpath='/store/mch/msrad/radar/swiss/data/'+year+'/'+event
     cellist=[]; timelist=[]
     cells=np.zeros([ly,lx])
-    fil=path["temp"]+'TRT/*'+ttime+'*'+'.trt'; print(fil)
-    file=glob.glob(path["temp"]+'TRT/*'+ttime+'*'+'.trt'); print(file)
     file=glob.glob(path["temp"]+'TRT/*'+ttime+'*'+'.trt')[0]
     cells=np.zeros([ly,lx])
     print(file)
@@ -526,7 +524,8 @@ def get_TRT(ttime, path):
         t=data.iloc[n].str.split(';',expand=True)
         TRT_ID=int(t[0].values)
         time=int(t[1].values)
-        tt=np.array(t)[0,82:-1]
+        if int(ttime)>220000000: tt=np.array(t)[0,82:-1]
+        else: tt=np.array(t)[0,25:-1]
         tt=np.reshape(tt,[int(len(tt)/2),2])
         tlat=tt[:,1].astype(float); tlon=tt[:,0].astype(float)
         chx,chy=transform.c_transform(tlon,tlat)
