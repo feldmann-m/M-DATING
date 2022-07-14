@@ -63,6 +63,85 @@ def plot_ppi_MF_masked(theta, r, myfinaldata, vmin, vmax, cmap, bound, imtitle, 
     fig.savefig(namefig)
     plt.close(fig=fig)
     
+def plot_cart_obj(background, xp, yp, sp, fp, xn, yn, sn, fn, colorp, colorn, imtitle, savepath, imname, radar):
+    """
+    plots cartesian reflectivity and radar locations and detected mesocyclones
+
+    Parameters
+    ----------
+    background : 2D array
+        cartesian reflectivity data.
+    xp : array
+        x coordinates of positive rotation.
+    yp : array
+        y coordinates of positive rotation.
+    sp : array
+        size of positive rotation.
+    xn : array
+        x coordinates of negative rotation.
+    yn : array
+        y coordinates of negative rotation.
+    sn : array
+        size of negative rotation.
+    colorp : array
+        strength of positive rotation.
+    colorn : array
+        strength of negative rotation.
+    contours : list
+        list of thunderstorm contours.
+    imtitle : string
+        image title.
+    savepath : string
+        path.
+    imname : string
+        filename.
+    radar : dict
+        radar meta data.
+
+    Returns
+    -------
+    None.
+
+    """
+    fig=plt.figure(figsize=(14,10))
+
+    o_x=254000
+    o_y=-159000
+    xp = (xp - o_x)/1000
+    xn = (xn - o_x)/1000
+    yp = (yp - o_y)/1000
+    yn = (yn - o_y)/1000
+    #turbo=nmmn.plots.turbocmap()
+    cmap=plt.cm.turbo
+    # cmap.set_under(color='gray')
+    p0=plt.imshow(background, origin='lower', vmin=0, vmax=100, cmap=cmap)
+    plt.colorbar(p0, cmap=cmap,  boundaries=np.arange(0,100,5), ticks=np.arange(0,100,5), extend='both', orientation='vertical',shrink=0.7)
+    p1=plt.scatter((np.array(radar["x"])- o_x)/1000,(np.array(radar["y"])- o_y)/1000,s=None,c='black')
+    borders = shapefile.Reader('/users/mfeldman/map_radar/Border_CH.shp')
+    listx=[]
+    listy=[]
+    for shape in borders.shapeRecords():
+        x = [(i[0]-o_x)/1000 for i in shape.shape.points[:]]
+        y = [(i[1]-o_y)/1000 for i in shape.shape.points[:]]
+        listx.append(x);listy.append(y)
+        plt.plot(x,y,'r',linewidth=1.5)
+    ap=np.ones(len(fp)); ap[fp==0]=0.8
+    an=np.ones(len(fn)); an[fn==0]=0.8
+    p2=plt.scatter(xp,yp,s=sp,c=colorp, vmin=0, vmax=5, cmap='Blues', edgecolors='gray',alpha=ap,marker="^")
+    p3=plt.scatter(xn,yn,s=sn,c=colorn, vmin=0, vmax=5, cmap='Reds', edgecolors='gray',alpha=an,marker="v")
+    # for contour in contours:
+    #     p4=plt.plot(contour[:,1], contour[:,0], color='grey')
+    # plt.colorbar(p2, cmap='Blues',  boundaries=np.arange(0, 6), ticks=np.arange(0, 6), extend='both', orientation='horizontal',shrink=0.7)
+    # plt.colorbar(p3, cmap='Reds',  boundaries=np.arange(0, 6), ticks=np.arange(0, 6), extend='both', orientation='horizontal',shrink=0.7)
+    plt.title(imtitle)
+    plt.ylim(0, 640)
+    plt.xlim(0, 710)
+    plt.tight_layout()
+    namefig=savepath + imname
+    plt.show()
+    fig.savefig(namefig,transparent=True)
+    plt.close(fig=fig)
+    
 def plot_cart_scatter(myfinaldata, xp, yp, sp, xn, yn, sn, colorp, colorn, contours, imtitle, savepath, imname, radar):
     """
     plots cartesian reflectivity and radar locations and detected mesocyclones
@@ -112,7 +191,7 @@ def plot_cart_scatter(myfinaldata, xp, yp, sp, xn, yn, sn, colorp, colorn, conto
     yp = (yp - o_y)/1000
     yn = (yn - o_y)/1000
     #turbo=nmmn.plots.turbocmap()
-    cmap='turbo'
+    cmap=plt.cm.turbo
     cmap.set_under(color='gray')
     p0=plt.pcolormesh(myfinaldata, vmin=0, vmax=60, cmap=cmap)
     plt.colorbar(p0, cmap=cmap,  boundaries=np.arange(0,70,5), ticks=np.arange(0,70,5), extend='both', orientation='vertical',shrink=0.7)
@@ -137,7 +216,7 @@ def plot_cart_scatter(myfinaldata, xp, yp, sp, xn, yn, sn, colorp, colorn, conto
     plt.tight_layout()
     namefig=savepath + imname
     plt.show()
-    fig.savefig(namefig)
+    fig.savefig(namefig,transparent=True)
     plt.close(fig=fig)
     
 

@@ -25,6 +25,7 @@ import library.plot as plot
 import library.transform as transform
 import library.meso as meso
 import glob
+import pyart
 
 #%% FUNCTIONS FOR PARALLELIZATION OF ELEVATION PROCESSING
 # MUST BE DEFINED IN MAIN SCRIPT
@@ -296,8 +297,17 @@ phist,nhist=io.read_histfile(path)
 phist,vert_p=meso.rot_hist(vert_p, phist,time)
 nhist,vert_n=meso.rot_hist(vert_n, nhist,time)
 io.write_histfile(phist,nhist,path)
-pfile=path["temp"]+'ROT/'+'PROT'+str(year)+str(event)+str(time)+'.json'
+pfile=path["temp"]+'ROT/'+'PROT'+str(time)+'.json'
 io.write_geojson(vert_p,pfile)
-nfile=path["temp"]+'ROT/'+'NROT'+str(year)+str(event)+str(time)+'.json'
+nfile=path["temp"]+'ROT/'+'NROT'+str(time)+'.json'
 io.write_geojson(vert_n,nfile)
+#%%
+b_file=glob.glob(path["temp"]+'POH/*'+str(time)+'*')
+metranet=pyart.aux_io.read_cartesian_metranet(b_file[0])
+background=metranet.fields['probability_of_hail']['data'][0,:,:]
+xp=vert_p.x; yp=vert_p.y; sp=np.nansum([vert_p.A_n,vert_p.D_n,vert_p.L_n,vert_p.P_n,vert_p.W_n]);fp=vert_p.flag;cp=vert_p.rank_90
+xn=vert_n.x; yn=vert_n.y; sn=np.nansum([vert_n.A_n,vert_n.D_n,vert_n.L_n,vert_n.P_n,vert_n.W_n]);fn=vert_n.flag;cn=vert_n.rank_90
+imtitle='Detected mesocyclones on POH background';savepath=path["temp"]+'IM/';imname='ROT'+str(time+'.png')
+plot.plot_cart_obj(background, xp, yp, sp*20, fp, xn, yn, sn*20, fn, cp, cn, imtitle, savepath, imname, radar)
+
 
