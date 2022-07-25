@@ -51,18 +51,20 @@ def vars(event, year):
     # PATH PARAMETERS
     path = {
         "home": '/users/mfeldman/',
-        "scripts": '/users/mfeldman/scripts/mesocyclone_detection',
-        "dvdata": '/scratch/mfeldman/mesocyclone_detection/c_cases/',
-        "mldata": '/scratch/mfeldman/mesocyclone_detection/c_cases/',
-        "czdata": '/scratch/mfeldman/mesocyclone_detection/c_cases/',
-        "images": '/store/mch/msrad/mfeldman/im_med/',
-        "files": '/store/mch/msrad/mfeldman/file_med/'+event+'/',
-        "event": event,
-        "archive": '/store/msrad/radar/swiss/data/'+year+'/',
+        "scripts": '/scratch/lom/mof/code/ELDES_MESO/',
+        "dvdata": '/srn/data/zuerh450/',
+        "lomdata": '/srn/data/',
+        "outdir": '/scratch/lom/mof/realtime/',
+        #"mldata": '/scratch/mfeldman/mesocyclone_detection/c_cases/',
+        #"czdata": '/scratch/mfeldman/mesocyclone_detection/c_cases/',
+        #"images": '/store/mch/msrad/mfeldman/im_med/',
+        #"files": '/store/mch/msrad/mfeldman/file_med/'+event+'/',
+        #"event": event,
+        #"archive": '/store/msrad/radar/swiss/data/'+year+'/',
         #"temp": '/scratch/mfeldman/temp_rot/'+event+'/',
-        "temp": '/scratch/mfeldman/realtime/',
+        #"temp": '/scratch/mfeldman/realtime/',
         #"temp": '/scratch/lom/mof/realtime/',
-        "r2d2": '/store/mch/msrad/mfeldman/'+year+'/'
+        #"r2d2": '/store/mch/msrad/mfeldman/'+year+'/'
     }
     
     specs = {

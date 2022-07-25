@@ -516,7 +516,7 @@ def get_TRT(ttime, path):
     #cpath='/store/mch/msrad/radar/swiss/data/'+year+'/'+event
     cellist=[]; timelist=[]
     cells=np.zeros([ly,lx])
-    file=glob.glob(path["temp"]+'TRT/*'+ttime+'*'+'.trt')[0]
+    file=glob.glob(path["lomdata"]+'TRTC/*'+ttime+'*'+'.trt')[0]
     cells=np.zeros([ly,lx])
     print(file)
     data=pd.read_csv(file).iloc[8:]
@@ -537,23 +537,23 @@ def get_TRT(ttime, path):
     return cellist, timelist
 
 def write_histfile(phist,nhist,path):
-    file=glob.glob(path["temp"]+'ROT/'+'*hist*')
+    file=glob.glob(path["outdir"]+'ROT/'+'*hist*')
     try: 
         if len(file)>0:
             for f in file: os.remove(f)
     except: print("directory "+ str(file)+ " does not exist")
     
-    phist.to_csv(path["temp"]+'ROT/'+'phist.txt', header=phist.columns, index=range(len(phist)), sep=';', mode='a')
-    nhist.to_csv(path["temp"]+'ROT/'+'nhist.txt', header=nhist.columns, index=range(len(nhist)), sep=';', mode='a')
+    phist.to_csv(path["outdir"]+'ROT/'+'phist.txt', header=phist.columns, index=range(len(phist)), sep=';', mode='a')
+    nhist.to_csv(path["outdir"]+'ROT/'+'nhist.txt', header=nhist.columns, index=range(len(nhist)), sep=';', mode='a')
     
 def read_histfile(path):
     try:
-        phist=pd.read_csv(path["temp"]+'ROT/'+'phist.txt', sep=';')
+        phist=pd.read_csv(path["outdir"]+'ROT/'+'phist.txt', sep=';')
         phist= phist.drop(columns='Unnamed: 0')
     except:
         phist=pd.DataFrame(data=None, index=None, columns=["ID","cont","dis","latest"])
     try:
-        nhist=pd.read_csv(path["temp"]+'ROT/'+'nhist.txt', sep=';')
+        nhist=pd.read_csv(path["outdir"]+'ROT/'+'nhist.txt', sep=';')
         nhist= nhist.drop(columns='Unnamed: 0')
     except:
         nhist=pd.DataFrame(data=None, index=None, columns=["ID","cont","dis","latest"])
