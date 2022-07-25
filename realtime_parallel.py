@@ -8,10 +8,20 @@ Created on Mon Aug 17 15:49:37 2020
 
 import multiprocessing
 import numpy as np
+import argparse as ap
+#%%
+parser = ap.ArgumentParser()
+parser.add_argument('--dvdir', type=str, required=False,default='/srn/data/zuerh450/')
+parser.add_argument('--lomdir', type=str, required=False,default='/srn/data/')
+parser.add_argument('--outdir', type=str, required=False,default='/scratch/lom/mof/realtime/')
+parser.add_argument('--codedir', type=str, required=False,default='/scratch/lom/mof/code/ELDES_MESO/')
+parser.add_argument('--time', type=str, required=True)
+args = parser.parse_args()
+
 import os
 import sys
 sys.path.append('/users/mfeldman/scripts/ELDES_MESO')
-sys.path.append('/scratch/lom/mof/code/ELDES_MESO')
+sys.path.append(args.codedir)
 import pandas as pd
 pd.options.mode.chained_assignment = None
 import skimage.morphology as skim
@@ -205,10 +215,10 @@ def elevation_processor(r, el, radar, cartesian, path, specs, coord, files, shea
 
 #%% INITIALIZE PROCESSING
 # load case dates and times, load variables, launch timer
-time=sys.argv[1]
-event=sys.argv[2]
-year=sys.argv[3]
-radar, cartesian, path, specs, files, shear, resolution=variables.vars(event, year)
+time=args.time
+#event=sys.argv[2]
+#year=sys.argv[3]
+radar, cartesian, path, specs, files, shear, resolution=variables.vars(args.dvdir,args.lomdir,args.outdir,args.codedir)
 coord=variables.read_mask(radar)
 #io.makedir(path)
 
@@ -301,13 +311,13 @@ pfile=path["outdir"]+'ROT/'+'PROT'+str(time)+'.json'
 io.write_geojson(vert_p,pfile)
 nfile=path["outdir"]+'ROT/'+'NROT'+str(time)+'.json'
 io.write_geojson(vert_n,nfile)
-#%%
-b_file=glob.glob(path["lomdata"]+'BZC/*'+str(time)+'*')
-metranet=pyart.aux_io.read_cartesian_metranet(b_file[0])
-background=metranet.fields['probability_of_hail']['data'][0,:,:]
-xp=vert_p.x; yp=vert_p.y; sp=np.nansum([vert_p.A_n,vert_p.D_n,vert_p.L_n,vert_p.P_n,vert_p.W_n]);fp=vert_p.flag;cp=vert_p.rank_90
-xn=vert_n.x; yn=vert_n.y; sn=np.nansum([vert_n.A_n,vert_n.D_n,vert_n.L_n,vert_n.P_n,vert_n.W_n]);fn=vert_n.flag;cn=vert_n.rank_90
-imtitle='Detected mesocyclones on POH background';savepath=path["outdir"]+'IM/';imname='ROT'+str(time+'.png')
-plot.plot_cart_obj(background, xp, yp, sp*20, fp, xn, yn, sn*20, fn, cp, cn, imtitle, savepath, imname, radar)
+##%%
+#b_file=glob.glob(path["lomdata"]+'BZC/*'+str(time)+'*')
+#metranet=pyart.aux_io.read_cartesian_metranet(b_file[0],reader='python')
+#background=metranet.fields['probability_of_hail']['data'][0,:,:]
+#xp=vert_p.x; yp=vert_p.y; sp=np.nansum([vert_p.A_n,vert_p.D_n,vert_p.L_n,vert_p.P_n,vert_p.W_n]);fp=vert_p.flag;cp=vert_p.rank_90
+#xn=vert_n.x; yn=vert_n.y; sn=np.nansum([vert_n.A_n,vert_n.D_n,vert_n.L_n,vert_n.P_n,vert_n.W_n]);fn=vert_n.flag;cn=vert_n.rank_90
+#imtitle='Detected mesocyclones on POH background';savepath=path["outdir"]+'IM/';imname='ROT'+str(time+'.png')
+#plot.plot_cart_obj(background, xp, yp, sp*20, fp, xn, yn, sn*20, fn, cp, cn, imtitle, savepath, imname, radar)
 
 

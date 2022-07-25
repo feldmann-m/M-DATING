@@ -103,7 +103,7 @@ def plot_cart_obj(background, xp, yp, sp, fp, xn, yn, sn, fn, cp, cn, imtitle, s
     None.
 
     """
-    fig=plt.figure(figsize=(14,10))
+    fig=plt.figure(figsize=(6.4,7.1),frameon=False)#figsize=(14,10)
 
     o_x=254000
     o_y=-159000
@@ -111,41 +111,32 @@ def plot_cart_obj(background, xp, yp, sp, fp, xn, yn, sn, fn, cp, cn, imtitle, s
     xn = (xn - o_x)/1000
     yp = (yp - o_y)/1000
     yn = (yn - o_y)/1000
-    #turbo=nmmn.plots.turbocmap()
-    cmap=plt.cm.turbo
-    # cmap.set_under(color='gray')
+    cmap=plt.cm.Blues
+    #cmap.set_under(color='gray')
     p0=plt.imshow(background, origin='lower', vmin=0, vmax=100, cmap=cmap)
-    plt.colorbar(p0, cmap=cmap,  boundaries=np.arange(0,100,5), ticks=np.arange(0,100,5), extend='both', orientation='vertical',shrink=0.7)
+    # ax = plt.axes([0,0,1,1])
+    # plt.colorbar(p0, cmap=cmap,  boundaries=np.arange(0,75,5), ticks=np.arange(0,75,5), extend='both', orientation='vertical',shrink=0.7)
     p1=plt.scatter((np.array(radar["x"])- o_x)/1000,(np.array(radar["y"])- o_y)/1000,s=None,c='black')
-    borders = shapefile.Reader('/users/mfeldman/map_radar/Border_CH.shp')
-    listx=[]
-    listy=[]
-    for shape in borders.shapeRecords():
-        x = [(i[0]-o_x)/1000 for i in shape.shape.points[:]]
-        y = [(i[1]-o_y)/1000 for i in shape.shape.points[:]]
-        listx.append(x);listy.append(y)
-        plt.plot(x,y,'r',linewidth=1.5)
+
     ap=np.ones(len(fp)); ap[fp==0]=0.8
     an=np.ones(len(fn)); an[fn==0]=0.8
     ccp=np.round((cp.values+1)*fp.values).astype(int); ccp[ccp>5]=5
     ccn=np.round((cn.values+1)*fn.values).astype(int); ccn[ccn>5]=5
     color=np.array(['grey','white','green','yellow','darkorange','firebrick','purple'])
-    # p2=plt.scatter(xp,yp,s=sp,c=colorp, vmin=0, vmax=5, cmap='Blues', edgecolors='gray',alpha=ap,marker="^")
-    # p3=plt.scatter(xn,yn,s=sn,c=colorn, vmin=0, vmax=5, cmap='Reds', edgecolors='gray',alpha=an,marker="v")
+
     p2=plt.scatter(xp,yp,s=sp,c=color[ccp], vmin=0, vmax=5, marker="^",edgecolors='blue')
     p3=plt.scatter(xn,yn,s=sn,c=color[ccn], vmin=0, vmax=5, marker="v",edgecolors='red')
-    # for contour in contours:
-    #     p4=plt.plot(contour[:,1], contour[:,0], color='grey')
-    # plt.colorbar(p2, boundaries=np.arange(0, 7), ticks=np.arange(0, 7), extend='both', orientation='vertical',shrink=0.7)
-    # plt.colorbar(p3, cmap='Reds',  boundaries=np.arange(0, 6), ticks=np.arange(0, 6), extend='both', orientation='horizontal',shrink=0.7)
-    plt.title(imtitle)
+    plt.axis('off')
     plt.ylim(0, 640)
     plt.xlim(0, 710)
-    plt.tight_layout()
+    # plt.tight_layout()
     namefig=savepath + imname
-    plt.show()
-    fig.savefig(namefig,transparent=True)
-    plt.close(fig=fig)
+    fig.patch.set_visible(False)
+    # plt.show()
+    # with open(namefig, 'wb') as outfile:
+    #     fig.canvas.print_png(outfile)
+    plt.savefig(namefig,transparent=True,bbox_inches='tight',dpi=100,pad_inches=0)
+    plt.close()
     
 def plot_cart_scatter(myfinaldata, xp, yp, sp, xn, yn, sn, colorp, colorn, contours, imtitle, savepath, imname, radar):
     """
@@ -201,7 +192,7 @@ def plot_cart_scatter(myfinaldata, xp, yp, sp, xn, yn, sn, colorp, colorn, conto
     p0=plt.pcolormesh(myfinaldata, vmin=0, vmax=60, cmap=cmap)
     plt.colorbar(p0, cmap=cmap,  boundaries=np.arange(0,70,5), ticks=np.arange(0,70,5), extend='both', orientation='vertical',shrink=0.7)
     p1=plt.scatter((np.array(radar["x"])- o_x)/1000,(np.array(radar["y"])- o_y)/1000,s=None,c='black')
-    borders = shapefile.Reader('/users/mfeldman/map_radar/Border_CH.shp')
+    borders = shapefile.Reader('/scratch/lom/mof/code/ELDES_MESO/map_radar/Border_CH.shp')
     listx=[]
     listy=[]
     for shape in borders.shapeRecords():

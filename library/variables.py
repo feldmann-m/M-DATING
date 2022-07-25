@@ -13,7 +13,7 @@ import pandas as pd
 import pyart
 
 #%%
-def vars(event, year):
+def vars(dvdir,lomdir,outdir,codedir):#event, year):
     #RADAR PARAMETERS
     radar =	{
         "radars": ['A','D','L','P','W'],
@@ -51,10 +51,10 @@ def vars(event, year):
     # PATH PARAMETERS
     path = {
         "home": '/users/mfeldman/',
-        "scripts": '/scratch/lom/mof/code/ELDES_MESO/',
-        "dvdata": '/srn/data/zuerh450/',
-        "lomdata": '/srn/data/',
-        "outdir": '/scratch/lom/mof/realtime/',
+        "scripts": codedir,#'/scratch/lom/mof/code/ELDES_MESO/',
+        "dvdata": dvdir,#'/srn/data/zuerh450/',
+        "lomdata": lomdir,#'/srn/data/',
+        "outdir": outdir,#'/scratch/lom/mof/realtime/',
         #"mldata": '/scratch/mfeldman/mesocyclone_detection/c_cases/',
         #"czdata": '/scratch/mfeldman/mesocyclone_detection/c_cases/',
         #"images": '/store/mch/msrad/mfeldman/im_med/',
