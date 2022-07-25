@@ -298,9 +298,9 @@ phist,nhist=io.read_histfile(path)
 phist,vert_p=meso.rot_hist(vert_p, phist,time)
 nhist,vert_n=meso.rot_hist(vert_n, nhist,time)
 io.write_histfile(phist,nhist,path)
-pfile=path["temp"]+'ROT/'+'PROT'+str(year)+str(event)+str(time)+'.json'
+pfile=path["temp"]+'ROT/'+'PROT'+str(time)+'.json'
 io.write_geojson(vert_p,pfile)
-nfile=path["temp"]+'ROT/'+'NROT'+str(year)+str(event)+str(time)+'.json'
+nfile=path["temp"]+'ROT/'+'NROT'+str(time)+'.json'
 io.write_geojson(vert_n,nfile)
 #%%
 b_file=glob.glob(path["temp"]+'POH/*'+str(time)+'*')

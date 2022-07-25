@@ -63,7 +63,7 @@ def plot_ppi_MF_masked(theta, r, myfinaldata, vmin, vmax, cmap, bound, imtitle, 
     fig.savefig(namefig)
     plt.close(fig=fig)
     
-def plot_cart_obj(background, xp, yp, sp, fp, xn, yn, sn, fn, colorp, colorn, imtitle, savepath, imname, radar):
+def plot_cart_obj(background, xp, yp, sp, fp, xn, yn, sn, fn, cp, cn, imtitle, savepath, imname, radar):
     """
     plots cartesian reflectivity and radar locations and detected mesocyclones
 
@@ -127,11 +127,16 @@ def plot_cart_obj(background, xp, yp, sp, fp, xn, yn, sn, fn, colorp, colorn, im
         plt.plot(x,y,'r',linewidth=1.5)
     ap=np.ones(len(fp)); ap[fp==0]=0.8
     an=np.ones(len(fn)); an[fn==0]=0.8
-    p2=plt.scatter(xp,yp,s=sp,c=colorp, vmin=0, vmax=5, cmap='Blues', edgecolors='gray',alpha=ap,marker="^")
-    p3=plt.scatter(xn,yn,s=sn,c=colorn, vmin=0, vmax=5, cmap='Reds', edgecolors='gray',alpha=an,marker="v")
+    ccp=np.round((cp.values+1)*fp.values).astype(int); ccp[ccp>5]=5
+    ccn=np.round((cn.values+1)*fn.values).astype(int); ccn[ccn>5]=5
+    color=np.array(['grey','white','green','yellow','darkorange','firebrick','purple'])
+    # p2=plt.scatter(xp,yp,s=sp,c=colorp, vmin=0, vmax=5, cmap='Blues', edgecolors='gray',alpha=ap,marker="^")
+    # p3=plt.scatter(xn,yn,s=sn,c=colorn, vmin=0, vmax=5, cmap='Reds', edgecolors='gray',alpha=an,marker="v")
+    p2=plt.scatter(xp,yp,s=sp,c=color[ccp], vmin=0, vmax=5, marker="^",edgecolors='blue')
+    p3=plt.scatter(xn,yn,s=sn,c=color[ccn], vmin=0, vmax=5, marker="v",edgecolors='red')
     # for contour in contours:
     #     p4=plt.plot(contour[:,1], contour[:,0], color='grey')
-    # plt.colorbar(p2, cmap='Blues',  boundaries=np.arange(0, 6), ticks=np.arange(0, 6), extend='both', orientation='horizontal',shrink=0.7)
+    # plt.colorbar(p2, boundaries=np.arange(0, 7), ticks=np.arange(0, 7), extend='both', orientation='vertical',shrink=0.7)
     # plt.colorbar(p3, cmap='Reds',  boundaries=np.arange(0, 6), ticks=np.arange(0, 6), extend='both', orientation='horizontal',shrink=0.7)
     plt.title(imtitle)
     plt.ylim(0, 640)
