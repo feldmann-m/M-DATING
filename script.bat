@@ -18,7 +18,7 @@ conda activate meso
 
 cd /scratch/lom/mof/code/ELDES_MESO
 
-python realtime_parallel.py '222061310' '22206' '2022'
+python realtime_parallel.py --time '222061310'
 
-python realtime_plot.py '222061310' '22206' '2022'
+python realtime_plot.py --time '222061310'
 

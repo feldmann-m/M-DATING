@@ -221,7 +221,17 @@ time=args.time
 radar, cartesian, path, specs, files, shear, resolution=variables.vars(args.dvdir,args.lomdir,args.outdir,args.codedir)
 coord=variables.read_mask(radar)
 #io.makedir(path)
+try:
+    os.mkdir(args.outdir+'/ROT/')
+    print('Directory created')
+except FileExistsError:
+    print('Directory already exists')
 
+try:
+    os.mkdir(args.outdir+'/IM/')
+    print('Directory created')
+except FileExistsError:
+    print('Directory already exists')
 
 tower_list_p=[]
 tower_list_n=[]
