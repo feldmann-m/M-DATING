@@ -243,74 +243,102 @@ t=0
 trt_cells, timelist= io.get_TRT(time,path)
 t_tic=timeit.default_timer()
 #doy=timelist[t][:5]
-labels=trt_cells[t]
-newlabels=skim.dilation(labels,footprint=np.ones([5,5]))
-mask=newlabels>0
-
-t_toc=timeit.default_timer()
-print("cell tracking time elapsed [s]: ", t_toc-t_tic)
-
-print("starting rotation detection")
-# ROTATION TRACKING
-r_tic=timeit.default_timer()
-
-towers_p=pd.DataFrame(columns=["ID", "time", "radar","x", "y", "dz",
-                            "A","D","L","P","W","A_range","D_range","L_range",
-                            "P_range","W_range","A_n","D_n","L_n","P_n","W_n",
-                            "A_el","D_el","L_el","P_el","W_el",
-                            "size_sum","size_mean","vol_sum","vol_mean",
-                            "z_0","z_10", "z_25","z_50","z_75","z_90","z_100","z_IQR","z_mean",
-                            "r_0","r_10", "r_25","r_50","r_75","r_90","r_100","r_IQR","r_mean",
-                            "v_0","v_10", "v_25","v_50","v_75","v_90","v_100","v_IQR","v_mean",
-                            "d_0","d_10", "d_25","d_50","d_75","d_90","d_100","d_IQR","d_mean",
-                            "rank_0","rank_10", "rank_25","rank_50","rank_75","rank_90","rank_100","rank_IQR","rank_mean",
-                            ])
-towers_n=pd.DataFrame(columns=["ID", "time", "radar","x", "y", "dz",
-                            "A","D","L","P","W","A_range","D_range","L_range",
-                            "P_range","W_range","A_n","D_n","L_n","P_n","W_n",
-                            "A_el","D_el","L_el","P_el","W_el",
-                            "size_sum","size_mean","vol_sum","vol_mean",
-                            "z_0","z_10", "z_25","z_50","z_75","z_90","z_100","z_IQR","z_mean",
-                            "r_0","r_10", "r_25","r_50","r_75","r_90","r_100","r_IQR","r_mean",
-                            "v_0","v_10", "v_25","v_50","v_75","v_90","v_100","v_IQR","v_mean",
-                            "d_0","d_10", "d_25","d_50","d_75","d_90","d_100","d_IQR","d_mean",
-                            "rank_0","rank_10", "rank_25","rank_50","rank_75","rank_90","rank_100","rank_IQR","rank_mean",
-                            ])
-rotation_pos=variables.meso(); rotation_neg=variables.meso()
-print("Analysing timestep: ", timelist[t])
-# PARALLEL RADAR PROCESSING
-if __name__ == '__main__':
-    manager = multiprocessing.Manager()
-    return_dict = manager.dict()
-    jobs = []
-io.blockPrint()
-for r in radar["n_radars"]:
-    p = multiprocessing.Process(target=radar_processor, args=(r, radar, cartesian,
-                              path, specs, coord, files, shear, resolution, timelist,
-                              t, newlabels, mask, return_dict))
-    jobs.append(p)
-    p.start()
-for proc in jobs:
-    proc.join()
-# JOIN RESULTS FROM RADARS
-result=return_dict.values()
-io.enablePrint()
-for n in range(0,len(result)):
-    s_p, s_n = result[n]
-    rotation_pos["shear_objects"].append(s_p["shear_objects"])
-    rotation_pos["prop"]=pd.concat([rotation_pos["prop"],s_p["prop"]], ignore_index=True)
-    rotation_pos["shear_ID"].append(s_p["shear_ID"])
-    rotation_neg["shear_objects"].append(s_n["shear_objects"])
-    rotation_neg["prop"]=pd.concat([rotation_neg["prop"],s_n["prop"]], ignore_index=True)
-    rotation_neg["shear_ID"].append(s_n["shear_ID"])
-# MERGE OBJECT DETECTION FROM RADARS
-vert_p, v_ID_p = meso.tower(rotation_pos, newlabels, radar, shear, r, timelist[t], path)
-vert_n, v_ID_n = meso.tower(rotation_neg, newlabels, radar, shear, r, timelist[t], path)
+if len(trt_cells)>0:
+  labels=trt_cells[t]
+  newlabels=skim.dilation(labels,footprint=np.ones([5,5]))
+  mask=newlabels>0
+  
+  t_toc=timeit.default_timer()
+  print("cell tracking time elapsed [s]: ", t_toc-t_tic)
+  
+  print("starting rotation detection")
+  # ROTATION TRACKING
+  r_tic=timeit.default_timer()
+  
+  towers_p=pd.DataFrame(columns=["ID", "time", "radar","x", "y", "dz",
+                              "A","D","L","P","W","A_range","D_range","L_range",
+                              "P_range","W_range","A_n","D_n","L_n","P_n","W_n",
+                              "A_el","D_el","L_el","P_el","W_el",
+                              "size_sum","size_mean","vol_sum","vol_mean",
+                              "z_0","z_10", "z_25","z_50","z_75","z_90","z_100","z_IQR","z_mean",
+                              "r_0","r_10", "r_25","r_50","r_75","r_90","r_100","r_IQR","r_mean",
+                              "v_0","v_10", "v_25","v_50","v_75","v_90","v_100","v_IQR","v_mean",
+                              "d_0","d_10", "d_25","d_50","d_75","d_90","d_100","d_IQR","d_mean",
+                              "rank_0","rank_10", "rank_25","rank_50","rank_75","rank_90","rank_100","rank_IQR","rank_mean",
+                              ])
+  towers_n=pd.DataFrame(columns=["ID", "time", "radar","x", "y", "dz",
+                              "A","D","L","P","W","A_range","D_range","L_range",
+                              "P_range","W_range","A_n","D_n","L_n","P_n","W_n",
+                              "A_el","D_el","L_el","P_el","W_el",
+                              "size_sum","size_mean","vol_sum","vol_mean",
+                              "z_0","z_10", "z_25","z_50","z_75","z_90","z_100","z_IQR","z_mean",
+                              "r_0","r_10", "r_25","r_50","r_75","r_90","r_100","r_IQR","r_mean",
+                              "v_0","v_10", "v_25","v_50","v_75","v_90","v_100","v_IQR","v_mean",
+                              "d_0","d_10", "d_25","d_50","d_75","d_90","d_100","d_IQR","d_mean",
+                              "rank_0","rank_10", "rank_25","rank_50","rank_75","rank_90","rank_100","rank_IQR","rank_mean",
+                              ])
+  rotation_pos=variables.meso(); rotation_neg=variables.meso()
+  print("Analysing timestep: ", timelist[t])
+  # PARALLEL RADAR PROCESSING
+  if __name__ == '__main__':
+      manager = multiprocessing.Manager()
+      return_dict = manager.dict()
+      jobs = []
+  io.blockPrint()
+  for r in radar["n_radars"]:
+      p = multiprocessing.Process(target=radar_processor, args=(r, radar, cartesian,
+                                path, specs, coord, files, shear, resolution, timelist,
+                                t, newlabels, mask, return_dict))
+      jobs.append(p)
+      p.start()
+  for proc in jobs:
+      proc.join()
+  # JOIN RESULTS FROM RADARS
+  result=return_dict.values()
+  io.enablePrint()
+  for n in range(0,len(result)):
+      s_p, s_n = result[n]
+      rotation_pos["shear_objects"].append(s_p["shear_objects"])
+      rotation_pos["prop"]=pd.concat([rotation_pos["prop"],s_p["prop"]], ignore_index=True)
+      rotation_pos["shear_ID"].append(s_p["shear_ID"])
+      rotation_neg["shear_objects"].append(s_n["shear_objects"])
+      rotation_neg["prop"]=pd.concat([rotation_neg["prop"],s_n["prop"]], ignore_index=True)
+      rotation_neg["shear_ID"].append(s_n["shear_ID"])
+      
+  # MERGE OBJECT DETECTION FROM RADARS
+  vert_p, v_ID_p = meso.tower(rotation_pos, newlabels, radar, shear, r, timelist[t], path)
+  vert_n, v_ID_n = meso.tower(rotation_neg, newlabels, radar, shear, r, timelist[t], path)
+  
+  r_toc=timeit.default_timer()
+  print("time elapsed [s]: ", r_toc-r_tic)
+  
+else:
+  vert_p=pd.DataFrame(columns=["ID", "time", "radar","x", "y", "dz",
+                              "A","D","L","P","W","A_range","D_range","L_range",
+                              "P_range","W_range","A_n","D_n","L_n","P_n","W_n",
+                              "A_el","D_el","L_el","P_el","W_el",
+                              "size_sum","size_mean","vol_sum","vol_mean",
+                              "z_0","z_10", "z_25","z_50","z_75","z_90","z_100","z_IQR","z_mean",
+                              "r_0","r_10", "r_25","r_50","r_75","r_90","r_100","r_IQR","r_mean",
+                              "v_0","v_10", "v_25","v_50","v_75","v_90","v_100","v_IQR","v_mean",
+                              "d_0","d_10", "d_25","d_50","d_75","d_90","d_100","d_IQR","d_mean",
+                              "rank_0","rank_10", "rank_25","rank_50","rank_75","rank_90","rank_100","rank_IQR","rank_mean",
+                              ])
+  vert_n=pd.DataFrame(columns=["ID", "time", "radar","x", "y", "dz",
+                              "A","D","L","P","W","A_range","D_range","L_range",
+                              "P_range","W_range","A_n","D_n","L_n","P_n","W_n",
+                              "A_el","D_el","L_el","P_el","W_el",
+                              "size_sum","size_mean","vol_sum","vol_mean",
+                              "z_0","z_10", "z_25","z_50","z_75","z_90","z_100","z_IQR","z_mean",
+                              "r_0","r_10", "r_25","r_50","r_75","r_90","r_100","r_IQR","r_mean",
+                              "v_0","v_10", "v_25","v_50","v_75","v_90","v_100","v_IQR","v_mean",
+                              "d_0","d_10", "d_25","d_50","d_75","d_90","d_100","d_IQR","d_mean",
+                              "rank_0","rank_10", "rank_25","rank_50","rank_75","rank_90","rank_100","rank_IQR","rank_mean",
+                              ])
 
 tower_list_p.append(vert_p)
 tower_list_n.append(vert_n)
-r_toc=timeit.default_timer()
-print("time elapsed [s]: ", r_toc-r_tic)
+
 t_toc=timeit.default_timer()
 print("Computation time timestep: [s] ",t_toc-t_tic)
 phist,nhist=io.read_histfile(path)
