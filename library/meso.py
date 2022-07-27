@@ -249,7 +249,7 @@ def tower(rotation, areas, radar, shear, r, time, path):
         obj=prop.where(prop["v_ID"]==ID).dropna()
         if len(obj)<1: continue
         # tow=obj.drop(columns=['x','y','z','weight','ID'])
-        name=path["images"]+str(time)+'_'+str(ID)+radar["radars"][r]+'.txt'
+        # name=path["images"]+str(time)+'_'+str(ID)+radar["radars"][r]+'.txt'
         # io.write_track(tow, name)
         towers["ID"][ID]=ID
         towers["radar"][ID]=np.unique(obj["radar"].values) #obj["radar"].values.tolist()
