@@ -113,9 +113,9 @@ def plot_cart_obj(background, xp, yp, sp, fp, xn, yn, sn, fn, cp, cn, imtitle, s
     yn = (yn - o_y)/1000
     cmap=plt.cm.turbo
     #cmap.set_under(color='gray')
-    p0=plt.imshow(background, origin='lower', vmin=0, vmax=250, cmap=cmap)
+    p0=plt.imshow(background, origin='lower', vmin=0, vmax=65, cmap=cmap)
     # ax = plt.axes([0,0,1,1])
-    # plt.colorbar(p0, cmap=cmap,  boundaries=np.arange(0,75,5), ticks=np.arange(0,75,5), extend='both', orientation='vertical',shrink=0.7)
+    # plt.colorbar(p0, cmap=cmap, extend='both', orientation='vertical',shrink=0.7, boundaries=[0,1,2,5,10,15,25,40,60,100,150,250], ticks=[0,1,2,5,10,15,25,40,60,100,150,250])
     p1=plt.scatter((np.array(radar["x"])- o_x)/1000,(np.array(radar["y"])- o_y)/1000,s=5,c='black',marker=".")
 
     ap=np.ones(len(fp)); ap[fp==0]=0.8
