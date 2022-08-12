@@ -123,10 +123,10 @@ def plot_cart_obj(background, xp, yp, sp, fp, xn, yn, sn, fn, cp, cn, imtitle, s
     ccp=np.round((cp.values+1)*fp.values).astype(int); ccp[ccp>5]=5
     ccn=np.round((cn.values+1)*fn.values).astype(int); ccn[ccn>5]=5
     color=np.array(['grey','white','green','yellow','darkorange','firebrick','purple'])
-    if len(xp>0):
-      p2=plt.scatter(xp,yp,s=20,c=color[ccp], vmin=0, vmax=5, marker="^",edgecolors='blue')
-    if len(xn>0):
-      p3=plt.scatter(xn,yn,s=20,c=color[ccn], vmin=0, vmax=5, marker="v",edgecolors='red')
+    if len(xp)>0:
+      p2=plt.scatter(xp,yp,s=30,c=color[ccp], vmin=0, vmax=5, marker="^",edgecolors='blue')
+    if len(xn)>0:
+      p3=plt.scatter(xn,yn,s=30,c=color[ccn], vmin=0, vmax=5, marker="v",edgecolors='red')
     plt.axis('off')
     plt.ylim(0, 640)
     plt.xlim(0, 710)
