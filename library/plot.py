@@ -111,21 +111,22 @@ def plot_cart_obj(background, xp, yp, sp, fp, xn, yn, sn, fn, cp, cn, imtitle, s
     xn = (xn - o_x)/1000
     yp = (yp - o_y)/1000
     yn = (yn - o_y)/1000
-    cmap=plt.cm.Blues
+    cmap=plt.cm.turbo
     #cmap.set_under(color='gray')
-    p0=plt.imshow(background, origin='lower', vmin=0, vmax=100, cmap=cmap)
+    p0=plt.imshow(background, origin='lower', vmin=0, vmax=250, cmap=cmap)
     # ax = plt.axes([0,0,1,1])
     # plt.colorbar(p0, cmap=cmap,  boundaries=np.arange(0,75,5), ticks=np.arange(0,75,5), extend='both', orientation='vertical',shrink=0.7)
-    p1=plt.scatter((np.array(radar["x"])- o_x)/1000,(np.array(radar["y"])- o_y)/1000,s=1,c='black')
+    p1=plt.scatter((np.array(radar["x"])- o_x)/1000,(np.array(radar["y"])- o_y)/1000,s=5,c='black',marker=".")
 
     ap=np.ones(len(fp)); ap[fp==0]=0.8
     an=np.ones(len(fn)); an[fn==0]=0.8
     ccp=np.round((cp.values+1)*fp.values).astype(int); ccp[ccp>5]=5
     ccn=np.round((cn.values+1)*fn.values).astype(int); ccn[ccn>5]=5
     color=np.array(['grey','white','green','yellow','darkorange','firebrick','purple'])
-
-    p2=plt.scatter(xp,yp,s=sp,c=color[ccp], vmin=0, vmax=5, marker="^",edgecolors='blue')
-    p3=plt.scatter(xn,yn,s=sn,c=color[ccn], vmin=0, vmax=5, marker="v",edgecolors='red')
+    if len(xp>0):
+      p2=plt.scatter(xp,yp,s=20,c=color[ccp], vmin=0, vmax=5, marker="^",edgecolors='blue')
+    if len(xn>0):
+      p3=plt.scatter(xn,yn,s=20,c=color[ccn], vmin=0, vmax=5, marker="v",edgecolors='red')
     plt.axis('off')
     plt.ylim(0, 640)
     plt.xlim(0, 710)
