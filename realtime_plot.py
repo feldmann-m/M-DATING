@@ -19,6 +19,8 @@ import numpy as np
 import sys
 sys.path.append('/users/mfeldman/scripts/ELDES_MESO')
 sys.path.append('/scratch/lom/mof/code/ELDES_MESO')
+import os
+os.environ['METRANETLIB_PATH'] = '/srn/las/idl/lib/radlib/'
 import pandas as pd
 import skimage.morphology as skim
 pd.options.mode.chained_assignment = None
@@ -77,7 +79,7 @@ if len(cells)>0:
   try:
     b_file=glob.glob(path["lomdata"]+'RZC/*'+str(time)+'*')[0]
     print(b_file)
-    metranet=pyart.aux_io.read_cartesian_metranet(b_file,reader='python')
+    metranet=pyart.aux_io.read_cartesian_metranet(b_file)
     czc=metranet.fields['radar_estimated_rain_rate']['data'][0,:,:]
     newcells=skim.dilation(cells[0],footprint=np.ones([5,5]))
     newcells[newcells==0]=np.nan
