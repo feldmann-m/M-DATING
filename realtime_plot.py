@@ -74,14 +74,29 @@ if len(vert_n)==0: vert_n=pd.DataFrame(columns=['geometry', 'ID', 'time', 'x', '
 cells,timelist=io.get_TRT(time, path)
 #print(np.unique(czc))
 if len(cells)>0:
-  b_file=glob.glob(path["lomdata"]+'RZC/*'+str(time)+'*')[0]
-  print(b_file)
-  metranet=pyart.aux_io.read_cartesian_metranet(b_file,reader='python')
-  czc=metranet.fields['radar_estimated_rain_rate']['data'][0,:,:]
-  newcells=skim.dilation(cells[0],footprint=np.ones([5,5]))
-  newcells[newcells==0]=np.nan
-  newcells[newcells>0]=1
-  background=newcells*czc
+  try:
+    b_file=glob.glob(path["lomdata"]+'RZC/*'+str(time)+'*')[0]
+    print(b_file)
+    metranet=pyart.aux_io.read_cartesian_metranet(b_file,reader='python')
+    czc=metranet.fields['radar_estimated_rain_rate']['data'][0,:,:]
+    newcells=skim.dilation(cells[0],footprint=np.ones([5,5]))
+    newcells[newcells==0]=np.nan
+    newcells[newcells>0]=1
+    background=newcells*czc
+  except:
+    b_file=glob.glob(path["lomdata"]+'RZC/*'+str(time)+'*')[0]
+    print('Problem with file',b_file)
+    newcells=skim.dilation(cells[0],footprint=np.ones([5,5]))
+    newcells[newcells==0]=np.nan
+    newcells[newcells>0]=1
+    background=newcells
+
+#  metranet=pyart.aux_io.read_cartesian_metranet(b_file,reader='python')
+#  czc=metranet.fields['radar_estimated_rain_rate']['data'][0,:,:]
+#  newcells=skim.dilation(cells[0],footprint=np.ones([5,5]))
+#  newcells[newcells==0]=np.nan
+#  newcells[newcells>0]=1
+#  background=newcells*czc
   #background=metranet.fields['vertically_integrated_liquid']['data'][0,:,:]
 else:
   background=np.zeros([640,710])

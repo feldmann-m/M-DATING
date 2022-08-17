@@ -124,7 +124,7 @@ def plot_cart_obj(background, xp, yp, sp, fp, xn, yn, sn, fn, cp, cn, imtitle, s
     ccn=np.round((cn.values+1)*fn.values).astype(int); ccn[ccn>5]=5
     color=np.array(['grey','white','green','yellow','darkorange','firebrick','purple'])
     if len(xp)>0:
-      p2=plt.scatter(xp,yp,s=30,c=color[ccp], vmin=0, vmax=5, marker="^",edgecolors='blue')
+      p2=plt.scatter(xp,yp,s=30,c=color[ccp], vmin=0, vmax=5, marker="^",edgecolors='aqua')
     if len(xn)>0:
       p3=plt.scatter(xn,yn,s=30,c=color[ccn], vmin=0, vmax=5, marker="v",edgecolors='red')
     plt.axis('off')
@@ -136,7 +136,7 @@ def plot_cart_obj(background, xp, yp, sp, fp, xn, yn, sn, fn, cp, cn, imtitle, s
     # plt.show()
     # with open(namefig, 'wb') as outfile:
     #     fig.canvas.print_png(outfile)
-    plt.savefig(namefig,transparent=True,bbox_inches='tight',dpi=100,pad_inches=0)
+    plt.savefig(namefig,transparent=True,bbox_inches='tight',dpi=300,pad_inches=0)
     plt.close()
     
 def plot_cart_scatter(myfinaldata, xp, yp, sp, xn, yn, sn, colorp, colorn, contours, imtitle, savepath, imname, radar):
