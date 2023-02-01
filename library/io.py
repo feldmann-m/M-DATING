@@ -536,6 +536,53 @@ def get_TRT(ttime, path):
     if np.nansum(cells.flatten())>0:cellist.append(cells); timelist.append(ttime)
     return cellist, timelist
 
+def get_TRT_file(file):
+    """
+    Extracts contours from TRT cells and produces gridded product for entire day
+
+    Parameters
+    ----------
+    year : string
+        year in YYYY.
+    event : date in
+        YYDDD.
+    path : dict
+        dict containing all paths.
+
+    Returns
+    -------
+    cellist : list of arrays
+        list of all 2D gridded TRT cells.
+    timelist : list
+        list of all valid timesteps.
+
+    """
+    o_x=254000
+    o_y=-159000
+    lx=710; ly=640
+    # cells=np.zeros([ly,lx])
+    #cpath='/store/mch/msrad/radar/swiss/data/'+year+'/'+event
+    cellist=[]; timelist=[]
+    cells=np.zeros([ly,lx])
+    cells=np.zeros([ly,lx])
+    print(file)
+    data=pd.read_csv(file).iloc[8:]
+    for n in range(len(data)):
+        t=data.iloc[n].str.split(';',expand=True)
+        TRT_ID=int(t[0].values)
+        time=int(t[1].values)
+        if int(time)>220000000: tt=np.array(t)[0,82:-1]
+        else: tt=np.array(t)[0,25:-1]
+        tt=np.reshape(tt,[int(len(tt)/2),2])
+        tlat=tt[:,1].astype(float); tlon=tt[:,0].astype(float)
+        chx,chy=transform.c_transform(tlon,tlat)
+        ix=np.round((chx-o_x)/1000).astype(int)
+        iy=np.round((chy-o_y)/1000).astype(int)
+        rr, cc = polygon(iy, ix, cells.shape)
+        cells[rr,cc]=int(t[0].values);
+    if np.nansum(cells.flatten())>0:cellist.append(cells); timelist.append(time)
+    return cellist, timelist
+
 def write_histfile(phist,nhist,path):
     file=glob.glob(path["outdir"]+'ROT/'+'*hist*')
     try: 
