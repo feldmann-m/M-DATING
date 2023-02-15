@@ -1,0 +1,27 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[[source]]
+url = "https://hub.meteoswiss.ch/nexus/repository/python-all/simple"
+verify_ssl = true
+name = "hubmeteoswiss"
+
+[packages]
+numpy = {version = "*", index = "hubmeteoswiss"}
+pandas = {version = "*", index = "hubmeteoswiss"}
+scikit-image = {version = "*", index = "hubmeteoswiss"}
+astropy = {version = "*", index = "hubmeteoswiss"}
+netcdf4 = {version = "*", index = "hubmeteoswiss"}
+pyart-mch = {version = "*", index = "hubmeteoswiss"}
+geojson = {version = "*", index = "hubmeteoswiss"}
+matplotlib = {version = "*", index = "hubmeteoswiss"}
+pyshp = {version = "*", index = "hubmeteoswiss"}
+geopandas = {version = "*", index = "hubmeteoswiss"}
+py-radlib = {version = "*", index = "hubmeteoswiss"}
+
+[dev-packages]
+
+[requires]
+python_version = "3.9"
