@@ -162,7 +162,7 @@ def plot_cart_day(trtcells,vert_p,vert_n, imtitle, savepath, imname, radar):
     """
     o_x=254000
     o_y=-159000
-    background=np.zeros([640,710])
+    background=np.zeros([640,710]); background[:]=np.nan
     fig=plt.figure(figsize=(6.4,7.1),frameon=False)#figsize=(14,10)
     p0=plt.imshow(background, origin='lower')
     p1=plt.scatter((np.array(radar["x"])- o_x)/1000,(np.array(radar["y"])- o_y)/1000,s=5,c='black',marker=".")
@@ -172,27 +172,28 @@ def plot_cart_day(trtcells,vert_p,vert_n, imtitle, savepath, imname, radar):
         tcell=trtcells[trtcells.ID==t_id]
         pcell=vert_p[vert_p.ID==t_id]
         ncell=vert_n[vert_n.ID==t_id]
+        if np.nansum(pcell.flag)+np.nansum(ncell.flag)==0: continue
         xp = (pcell.x - o_x)/1000
         xn = (ncell.x - o_x)/1000
-        xt = (tcell.x - o_x)/1000
+        xt = (tcell.chx - o_x)/1000
         yp = (pcell.y - o_y)/1000
         yn = (ncell.y - o_y)/1000
-        yt = (tcell.y - o_y)/1000
+        yt = (tcell.chy - o_y)/1000
 
         sp=np.nansum([pcell.A_n,pcell.D_n,pcell.L_n,pcell.P_n,pcell.W_n]);fp=pcell.flag;cp=pcell.rank_90
         sn=np.nansum([ncell.A_n,ncell.D_n,ncell.L_n,ncell.P_n,ncell.W_n]);fn=ncell.flag;cn=ncell.rank_90
         
-        p4 = plt.plot(xt,yt,s=30,color='k')
+        p4 = plt.plot(xt,yt,color='blue',linewidth=1)
         
         ap=np.ones(len(fp)); ap[fp==0]=0.8
         an=np.ones(len(fn)); an[fn==0]=0.8
-        ccp=np.round((cp.values+1)*fp.values).astype(int); ccp[ccp>5]=5
-        ccn=np.round((cn.values+1)*fn.values).astype(int); ccn[ccn>5]=5
+        ccp=np.round((cp.values+1)).astype(int); ccp[ccp>5]=5
+        ccn=np.round((cn.values+1)).astype(int); ccn[ccn>5]=5
         color=np.array(['grey','white','green','yellow','darkorange','firebrick','purple'])
         if len(xp)>0:
-          p2=plt.scatter(xp,yp,s=30,c=color[ccp], vmin=0, vmax=5, marker="^",edgecolors='aqua')
+          p2=plt.scatter(xp,yp,s=30,c=color[ccp], vmin=0, vmax=5, marker="^",edgecolors='aqua',linewidth=0.5,alpha=0.8)
         if len(xn)>0:
-          p3=plt.scatter(xn,yn,s=30,c=color[ccn], vmin=0, vmax=5, marker="v",edgecolors='red')
+          p3=plt.scatter(xn,yn,s=30,c=color[ccn], vmin=0, vmax=5, marker="v",edgecolors='red',linewidth=0.5,alpha=0.5)
     plt.axis('off')
     plt.ylim(0, 640)
     plt.xlim(0, 710)

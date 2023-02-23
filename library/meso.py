@@ -71,6 +71,7 @@ def neighbor_check(n,m,shearID,shear_groups,g_ID,ind):
                 
     return shear_groups,ind
 
+#@profile
 def shear_group(rotation, sign, myfinaldata, az_shear, labels, resolution, distance, shear, radar, EL, el, R, r, fg_indices, time):
     ##merging pattern vectors to areas
     min_width=shear["width"]

@@ -20,6 +20,8 @@ import shutil
 from skimage.draw import polygon
 import library.transform as transform
 import geojson as gs
+import geopandas as gpd
+from geojson import FeatureCollection
 import glob
 #%%
 def blockPrint():
@@ -487,6 +489,77 @@ def TRT_to_grid(year, event, path):
                     cells[rr,cc]=int(t[0].values);
             if np.nansum(cells.flatten())>0:cellist.append(cells); timelist.append(time)
     return cellist, timelist
+
+
+def read_TRT(path, file=0, ttime=0):
+    """
+    Read .trt or .json file containing TRT output
+
+    Parameters
+    ----------
+    ttime : TYPE
+        DESCRIPTION.
+    path : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    trt_df : dataframe
+        TRT cells and attributes of the timestep.
+
+    """
+    
+    o_x=254000
+    o_y=-159000
+    lx=710; ly=640
+    cells=np.zeros([ly,lx])
+    if file == 0:
+        file=glob.glob(path["lomdata"]+'TRTC/*'+ttime+'*json*')
+        if len(file)>0: flag=1
+        else:
+            file=glob.glob(path["lomdata"]+'TRTC/*'+ttime+'*'+'.trt')[0]
+            flag=0
+    else:
+        if 'json' in file: flag=1; ttime=file[-20:-11]
+        else: flag=0; ttime=file[-15:-6]
+    
+    if flag==1:
+        with open(file[0]) as f: gj = FeatureCollection(gs.load(f))
+        trt_df=gpd.GeoDataFrame.from_features(gj['features'])
+        chx, chy = transform.c_transform(trt_df.lon.values.astype(float),trt_df.lat.values.astype(float))
+        lat,lon=trt_df.geometry[0].boundary.xy
+        trt_df['chx']=chx.astype(str); trt_df['chy']=chy.astype(str)
+    else:
+        data=pd.read_csv(file).iloc[8:]
+        headers=pd.read_csv(file).iloc[7:8].iloc[0][0].split()
+        trt_df=pd.DataFrame()
+        for n in range(len(data)):
+            t=data.iloc[n].str.split(';',expand=True)
+            trt_df.loc[n,'ID']=int(t[0].values)
+            trt_df.loc[n,'time']=int(t[1].values)
+            trt_df.loc[n,'lon']=t[2].values.astype(float)
+            trt_df.loc[n,'lat']=t[3].values.astype(float)
+            chx,chy=transform.c_transform([trt_df.loc[n,'lon']],[trt_df.loc[n,'lat']])
+            ix=np.round((chx-o_x)/1000).astype(int)
+            if ix>=710: ix=709
+            iy=np.round((chy-o_y)/1000).astype(int)
+            if iy>=640: iy=639
+            n2=27
+            if int(ttime)>=221520631: n2=82
+            tt=np.array(t)[0,n2:-1]
+            tt=np.reshape(tt,[int(len(tt)/2),2])
+            trt_df.loc[n,'chx']=chx
+            trt_df.loc[n,'chy']=chy
+            lat=tt[:,1].astype(float); lon=tt[:,0].astype(float)
+            # trt_df=trt_df.astype(str)
+    chx,chy=transform.c_transform(lon,lat)
+    ix=np.round((chx-o_x)/1000).astype(int)
+    iy=np.round((chy-o_y)/1000).astype(int)
+    rr, cc = polygon(iy, ix, cells.shape)
+    cells[rr,cc]=int(t[0].values);
+    
+    return trt_df, cells, ttime
+
 
 def get_TRT(ttime, path):
     """
