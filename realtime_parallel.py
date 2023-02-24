@@ -7,6 +7,7 @@ Created on Mon Aug 17 15:49:37 2020
 """
 
 import multiprocessing
+# from itertools import repeat
 import numpy as np
 import argparse as ap
 #%%
@@ -31,16 +32,200 @@ warnings.simplefilter('ignore',category=AstropyWarning)
 import timeit
 import library.variables as variables
 import library.io as io
-import library.plot as plot
+# import library.plot as plot
 import library.transform as transform
 import library.meso as meso
 import glob
-import pyart
+# import pyart
 
 #%% FUNCTIONS FOR PARALLELIZATION OF ELEVATION PROCESSING
 # MUST BE DEFINED IN MAIN SCRIPT
+def radel_processor (rel, radar, cartesian, path, specs, coord, files, shear, resolution,
+                    timelist, t, areas, mask, return_dict):
+    """
+    parallel processing of radars and elevations
+
+    Parameters
+    ----------
+    rel : int
+        radar x elevation number.
+    radvar : dict containing the following variables
+    
+    -----------
+    radar : dict
+        variable containing all radar information (see library.variables.py).
+    cartesian : dict
+        variable containing information of Cartesian grid.
+    path : dict
+        variable containing all data and saving paths.
+    specs : dict
+        variable containing setup specs.
+    coord : list
+        radar-relative Cartesian coordinates of polar grid.
+    files : dict
+        list of velocity files (currently unused).
+    shear : dict
+        variable containing all thresholds.
+    resolution : float
+        radial resolution in km.
+    timelist : list
+        list with all processed timesteps.
+    t : int
+        number of current timestep.
+    areas : 2D array
+        Cartesian grid with spatial grid of thunderstorm IDs.
+    mask : 2D array
+        Cartesian binary grid corresponding to thunderstorms.
+    return_dict : tuple
+        returns result of process, contains dicts of positive and negative rotation of radar.
+
+    Returns
+    -------
+    return_dict : tuple
+        returns result of process, contains dicts of positive and negative rotation of radar.
+
+    """
+    
+    # radar, cartesian, path, specs, coord, files, shear, resolution, timelist, t, areas, mask = radvar
+    
+    print('rel is', rel)
+    r=int(rel/100)-1
+    el=rel%100-1
+    
+    
+    print("Analysing radar: ",r+1,", elevation: ",el+1)
+    #rotation_pos, rotation_neg= meso.proc_el(r, el, radar, cartesian, path, specs, coord, files, shear, resolution, timelist, t, areas, mask)
+    
+    rotation_pos=variables.meso()
+    rotation_neg=variables.meso()
+    
+    
+    dvfile=glob.glob(path["dvdata"]+'DV'+radar["radars"][r]+'/*'+timelist[t]+'*.8'+radar["elevations"][el])[0]
+    # dvfile=path["temp"]+'DV'+radar["radars"][r]+'/DV'+radar["radars"][r]+timelist[t] \
+    #         +'7L'+specs["sweep_ID_DV"]+radar["elevations"][el]
+    myfinaldata, flag1 = io.read_del_data(dvfile)
+    #COMPUTE MASK FROM TRT CONTOURS
+    print(r, el)
+    p_mask=meso.mask(mask,coord, radar, cartesian, r, el)
+    l_mask=meso.mask(areas, coord, radar, cartesian, r, el)
+    # exit if too few valid pixels or no velocity data
+    if np.nansum(p_mask.flatten())<6: 
+        return variables.meso(), variables.meso();
+    elif flag1 == -1: 
+        return variables.meso(), variables.meso();
+    else:
+        # derive azimuthal shear
+        nyquist=radar["nyquist"][el]
+        mfd_conv=transform.conv(myfinaldata)
+        distance=variables.distance(myfinaldata, resolution)
+        mfd_conv[:,40:]=myfinaldata[:,40:]
+        az_shear = transform.az_cd(mfd_conv, nyquist, 0.8*nyquist, resolution, 2)[0]
+        rotation_pos=variables.meso(); rotation_neg=variables.meso()
+        ids=np.unique(l_mask)
+        ids=ids[ids>0]
+        if len(ids)>20:
+            manager2 = multiprocessing.Manager()
+            return_dict2 = manager2.dict()
+            jobs2 = []
+            
+            cellvar=l_mask, az_shear, mfd_conv, rotation_pos, rotation_neg, distance, r, el, return_dict2
+            for ii in ids:
+                p2 = multiprocessing.Process(target=cell_processor, args=(ii, cellvar))
+                p2.daemon=False
+                jobs2.append(p2)
+                p2.start()
+            # JOIN RESULTS FROM ELEVATIONS
+            for proc in jobs2:
+                proc.join()
+            result2=return_dict2.values()
+            
+            # with multiprocessing.Pool(len(ids)) as pool:
+            #     result=pool.starmap(cell_processor, zip(ids, repeat(cellvar)))
+                  
+            for n in range(0,len(result2)):
+                s_p, s_n = result2[n]
+                rotation_pos["shear_objects"].append(s_p["shear_objects"])
+                rotation_pos["prop"]=pd.concat([rotation_pos["prop"],s_p["prop"]], ignore_index=True)
+                rotation_pos["shear_ID"].append(s_p["shear_ID"])
+                rotation_neg["shear_objects"].append(s_n["shear_objects"])
+                rotation_neg["prop"]=pd.concat([rotation_neg["prop"],s_n["prop"]], ignore_index=True)
+                rotation_neg["shear_ID"].append(s_n["shear_ID"])
+        else:
+            cellvar=l_mask, az_shear, mfd_conv, rotation_pos, rotation_neg, distance, r, el
+            for ii in ids:
+                rotation_pos, rotation_neg = cell_loop(ii, cellvar)
 
     
+    return_dict[r*20+el]= rotation_pos, rotation_neg
+    
+def cell_processor(ii, cellvar):
+    
+    l_mask, az_shear, mfd_conv, rotation_pos, rotation_neg, distance, r, el, return_dict2 = cellvar
+    
+    binary=l_mask==ii
+    az_shear_m=az_shear*binary
+    mfd_conv_m=mfd_conv*binary
+    if np.nanmax(abs(az_shear_m.flatten('C')))>=3:
+        print("Identifying rotation shears")
+        # rotation object detection for both signs
+        rotation_pos=meso.shear_group(rotation_pos, 1, 
+                                                    mfd_conv_m, 
+                                                    az_shear_m, 
+                                                    ii, 
+                                                    resolution, 
+                                                    distance, 
+                                                    shear, radar,
+                                                    radar["elevations"][el], el,
+                                                    radar["radars"][r], r,
+                                                    coord[el], timelist[t])
+        
+        rotation_neg=meso.shear_group(rotation_neg, -1, 
+                                                    mfd_conv_m, 
+                                                    az_shear_m, 
+                                                    ii, 
+                                                    resolution, 
+                                                    distance, 
+                                                    shear, radar,
+                                                    radar["elevations"][el], el,
+                                                    radar["radars"][r], r,
+                                                    coord[el], timelist[t])
+    
+    return_dict2[ii]= rotation_pos, rotation_neg
+    
+def cell_loop(ii, cellvar):
+    
+    l_mask, az_shear, mfd_conv, rotation_pos, rotation_neg, distance, r, el= cellvar
+    
+    binary=l_mask==ii
+    az_shear_m=az_shear*binary
+    mfd_conv_m=mfd_conv*binary
+    if np.nanmax(abs(az_shear_m.flatten('C')))>=3:
+        print("Identifying rotation shears")
+        # rotation object detection for both signs
+        rotation_pos=meso.shear_group(rotation_pos, 1, 
+                                                    mfd_conv_m, 
+                                                    az_shear_m, 
+                                                    ii, 
+                                                    resolution, 
+                                                    distance, 
+                                                    shear, radar,
+                                                    radar["elevations"][el], el,
+                                                    radar["radars"][r], r,
+                                                    coord[el], timelist[t])
+        
+        rotation_neg=meso.shear_group(rotation_neg, -1, 
+                                                    mfd_conv_m, 
+                                                    az_shear_m, 
+                                                    ii, 
+                                                    resolution, 
+                                                    distance, 
+                                                    shear, radar,
+                                                    radar["elevations"][el], el,
+                                                    radar["radars"][r], r,
+                                                    coord[el], timelist[t])
+    
+    return rotation_pos, rotation_neg
+
 def radar_processor(r, radar, cartesian, path, specs, coord, files, shear, resolution,
                     timelist, t, areas, mask, return_dict):
     """
@@ -198,7 +383,7 @@ def elevation_processor(r, el, radar, cartesian, path, specs, coord, files, shea
                                                             shear, radar,
                                                             radar["elevations"][el], el,
                                                             radar["radars"][r], r,
-                                                            cartesian["indices"], timelist[t])
+                                                            coord[el], timelist[t])
                 
                 rotation_neg=meso.shear_group(rotation_neg, -1, 
                                                             mfd_conv_m, 
@@ -209,7 +394,7 @@ def elevation_processor(r, el, radar, cartesian, path, specs, coord, files, shea
                                                             shear, radar,
                                                             radar["elevations"][el], el,
                                                             radar["radars"][r], r,
-                                                            cartesian["indices"], timelist[t])
+                                                            coord[el], timelist[t])
         # return results to radar processing
         return_dict2[el]=rotation_pos, rotation_neg
 
@@ -278,6 +463,12 @@ if len(trt_cells)>0:
                               "rank_0","rank_10", "rank_25","rank_50","rank_75","rank_90","rank_100","rank_IQR","rank_mean",
                               ])
   rotation_pos=variables.meso(); rotation_neg=variables.meso()
+  els=np.arange(1,21)
+  rads=np.arange(100,501,100)
+  rel=[]
+  for r in rads:
+      for el in els:
+          rel.append(r+el)
   print("Analysing timestep: ", timelist[t])
   # PARALLEL RADAR PROCESSING
   if __name__ == '__main__':
@@ -285,12 +476,18 @@ if len(trt_cells)>0:
       return_dict = manager.dict()
       jobs = []
   io.blockPrint()
-  for r in radar["n_radars"]:
-      p = multiprocessing.Process(target=radar_processor, args=(r, radar, cartesian,
+  for rel_i in rel:
+      p = multiprocessing.Process(target=radel_processor, args=(rel_i, radar, cartesian,
                                 path, specs, coord, files, shear, resolution, timelist,
                                 t, newlabels, mask, return_dict))
       jobs.append(p)
       p.start()
+  # for r in radar["n_radars"]:
+  #     p = multiprocessing.Process(target=radar_processor, args=(r, radar, cartesian,
+  #                               path, specs, coord, files, shear, resolution, timelist,
+  #                               t, newlabels, mask, return_dict))
+  #     jobs.append(p)
+  #     p.start()
   for proc in jobs:
       proc.join()
   # JOIN RESULTS FROM RADARS

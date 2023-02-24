@@ -85,7 +85,7 @@ def radel_processor (rel, radvar):
         returns result of process, contains dicts of positive and negative rotation of radar.
 
     """
-
+    
     radar, cartesian, path, specs, coord, files, shear, resolution, timelist, t, areas, mask = radvar
     
     print('rel is', rel)
@@ -93,7 +93,9 @@ def radel_processor (rel, radvar):
     el=rel%100-1
     
     
-    # print("Analysing radar: "+r+1+", elevation: "+el+1)
+    print("Analysing radar: ",r+1,", elevation: ",el+1)
+    #rotation_pos, rotation_neg= meso.proc_el(r, el, radar, cartesian, path, specs, coord, files, shear, resolution, timelist, t, areas, mask)
+    
     rotation_pos=variables.meso()
     rotation_neg=variables.meso()
     
@@ -103,6 +105,7 @@ def radel_processor (rel, radvar):
     #         +'7L'+specs["sweep_ID_DV"]+radar["elevations"][el]
     myfinaldata, flag1 = io.read_del_data(dvfile)
     #COMPUTE MASK FROM TRT CONTOURS
+    print(r, el)
     p_mask=meso.mask(mask,coord, radar, cartesian, r, el)
     l_mask=meso.mask(areas, coord, radar, cartesian, r, el)
     # exit if too few valid pixels or no velocity data
@@ -137,7 +140,7 @@ def radel_processor (rel, radvar):
                                                             shear, radar,
                                                             radar["elevations"][el], el,
                                                             radar["radars"][r], r,
-                                                            cartesian["indices"], timelist[t])
+                                                            coord[el], timelist[t])
                 
                 rotation_neg=meso.shear_group(rotation_neg, -1, 
                                                             mfd_conv_m, 
@@ -148,9 +151,9 @@ def radel_processor (rel, radvar):
                                                             shear, radar,
                                                             radar["elevations"][el], el,
                                                             radar["radars"][r], r,
-                                                            cartesian["indices"], timelist[t])
-        # return results to radar processing
-        return rotation_pos, rotation_neg
+                                                            coord[el], timelist[t])
+    
+    return rotation_pos, rotation_neg
         
         
 
@@ -225,8 +228,7 @@ def main():
           manager = multiprocessing.Manager()
           return_dict = manager.dict()
           jobs = []
-      io.blockPrint()
-      r=np.arange(5)
+      # io.blockPrint()
       els=np.arange(1,21)
       rads=np.arange(100,501,100)
       rel=[]
@@ -234,7 +236,7 @@ def main():
           for el in els:
               rel.append(r+el)
       radvar=radar, cartesian, path, specs, coord, files, shear, resolution, timelist, t, newlabels, mask
-      with multiprocessing.Pool(len(rel)) as pool:
+      with multiprocessing.Pool(10) as pool:
           result=pool.starmap(radel_processor, zip(rel, repeat(radvar)))
                                       
     
@@ -248,7 +250,7 @@ def main():
       #     proc.join()
       # # JOIN RESULTS FROM RADARS
       # result=return_dict.values()
-      io.enablePrint()
+      # io.enablePrint()
       for n in range(0,len(result)):
           s_p, s_n = result[n]
           rotation_pos["shear_objects"].append(s_p["shear_objects"])

@@ -6,15 +6,18 @@ Created on Fri Jun  5 17:06:13 2020
 @author: feldmann
 """
 
-import pyart
+# import pyart
 import numpy as np
 import pandas as pd
+import glob
 import scipy.ndimage as ndi
 import matplotlib.pyplot as plt
 import copy
 from datetime import datetime
 from datetime import timedelta
 import library.io as io
+import library.variables as variables
+import library.transform as transform
 #%%
 def mask(mask, coord, radar, cartesian, r, el):
     c_el=coord[el]
@@ -72,7 +75,7 @@ def neighbor_check(n,m,shearID,shear_groups,g_ID,ind):
     return shear_groups,ind
 
 #@profile
-def shear_group(rotation, sign, myfinaldata, az_shear, labels, resolution, distance, shear, radar, EL, el, R, r, fg_indices, time):
+def shear_group(rotation, sign, myfinaldata, az_shear, labels, resolution, distance, shear, radar, EL, el, R, r, coord, time):
     ##merging pattern vectors to areas
     min_width=shear["width"]
     az_shear=sign*az_shear
@@ -122,8 +125,10 @@ def shear_group(rotation, sign, myfinaldata, az_shear, labels, resolution, dista
             lmax=np.where(filt==ma); lmin=np.where(filt==mi)
             # mmax=np.nanmean(lmax[0]), np.nanmean(lmax[1])
             # mmin=np.nanmean(lmin[0]), np.nanmean(lmin[1])
-            xmax,ymax,zmax=pyart.core.antenna_to_cartesian(lmax[1], lmax[0], el)
-            xmin,ymin,zmin=pyart.core.antenna_to_cartesian(lmin[1], lmin[0], el)
+            # xmax,ymax,zmax=pyart.core.antenna_to_cartesian(lmax[1], lmax[0], el)
+            # xmin,ymin,zmin=pyart.core.antenna_to_cartesian(lmin[1], lmin[0], el)
+            xmax,ymax,zmax=coord[:,lmax[0],lmax[1]]
+            xmin,ymin,zmin=coord[:,lmin[0],lmin[1]]
             dis=np.array([])
             for n in range(len(xmax)):
                 dx=xmin-xmax[n]; dy=ymin-ymax[n]
@@ -147,13 +152,14 @@ def shear_group(rotation, sign, myfinaldata, az_shear, labels, resolution, dista
             else:
                 print("rotation characteristics:", dvel, vort, dis)
                 x=[]; y=[]; z=[];
-                for n in range(len(indices[0])):
-                    #print(r, n, indices[1][n], indices[0][n])
-                    cart_indices=pyart.core.antenna_to_cartesian(indices[1][n]/2, indices[0][n], el)
-                    #cart_indices=fg_indices[r][indices[1][n], indices[0][n], el]
-                    x.append(cart_indices[0])
-                    y.append(cart_indices[1])
-                    z.append(cart_indices[2])
+                x, y, z = coord[:,indices[0],indices[1]]
+                # for n in range(len(indices[0])):
+                #     #print(r, n, indices[1][n], indices[0][n])
+                #     cart_indices=pyart.core.antenna_to_cartesian(indices[1][n]/2, indices[0][n], el)
+                #     #cart_indices=fg_indices[r][indices[1][n], indices[0][n], el]
+                #     x.append(cart_indices[0])
+                #     y.append(cart_indices[1])
+                #     z.append(cart_indices[2])
                 cart_centroids = np.mean(x), np.mean(y), np.mean(z)
                 shear_prop.append([n, time, el, R, indices, cart_centroids[0]+radar["x"][r], cart_centroids[1]+radar["y"][r], cart_centroids[2]+radar["z"][r], dvel, vort, mindis, rank, vertical_ID, size, vol, cen_r])
                     
@@ -462,3 +468,109 @@ def rot_hist(tower_list, hist,time):
             hist2=hist2.append(h) #pd.concat([hist2,h])
     tower_list.flag=tower_list.cont*tower_list.dist
     return hist2,tower_list
+
+def proc_el(r, el, radar, cartesian, path, specs, coord, files, shear, resolution, timelist, t, areas, mask):
+    """
+    
+
+    Parameters
+    ----------
+    r : TYPE
+        DESCRIPTION.
+    el : TYPE
+        DESCRIPTION.
+    radar : dict
+        variable containing all radar information (see library.variables.py).
+    cartesian : dict
+        variable containing information of Cartesian grid.
+    path : dict
+        variable containing all data and saving paths.
+    specs : dict
+        variable containing setup specs.
+    coord : list
+        radar-relative Cartesian coordinates of polar grid.
+    files : dict
+        list of velocity files (currently unused).
+    shear : dict
+        variable containing all thresholds.
+    resolution : float
+        radial resolution in km.
+    timelist : list
+        list with all processed timesteps.
+    t : int
+        number of current timestep.
+    areas : 2D array
+        Cartesian grid with spatial grid of thunderstorm IDs.
+    mask : 2D array
+        Cartesian binary grid corresponding to thunderstorms.
+    return_dict : tuple
+        returns result of process, contains dicts of positive and negative rotation of radar.
+
+    Returns
+    -------
+    TYPE
+        DESCRIPTION.
+    TYPE
+        DESCRIPTION.
+
+    """
+    
+    
+    rotation_pos=variables.meso()
+    rotation_neg=variables.meso()
+    
+    
+    dvfile=glob.glob(path["dvdata"]+'DV'+radar["radars"][r]+'/*'+timelist[t]+'*.8'+radar["elevations"][el])[0]
+    # dvfile=path["temp"]+'DV'+radar["radars"][r]+'/DV'+radar["radars"][r]+timelist[t] \
+    #         +'7L'+specs["sweep_ID_DV"]+radar["elevations"][el]
+    myfinaldata, flag1 = io.read_del_data(dvfile)
+    #COMPUTE MASK FROM TRT CONTOURS
+    print(r, el)
+    p_mask=mask(mask,coord, radar, cartesian, r, el)
+    l_mask=mask(areas, coord, radar, cartesian, r, el)
+    # exit if too few valid pixels or no velocity data
+    if np.nansum(p_mask.flatten())<6: 
+        return variables.meso(), variables.meso();
+    elif flag1 == -1: 
+        return variables.meso(), variables.meso();
+    else:
+        # derive azimuthal shear
+        nyquist=radar["nyquist"][el]
+        mfd_conv=transform.conv(myfinaldata)
+        distance=variables.distance(myfinaldata, resolution)
+        mfd_conv[:,40:]=myfinaldata[:,40:]
+        az_shear = transform.az_cd(mfd_conv, nyquist, 0.8*nyquist, resolution, 2)[0]
+        rotation_pos=variables.meso(); rotation_neg=variables.meso()
+        ids=np.unique(l_mask)
+        ids=ids[ids>0]
+        for ii in ids:
+            # mask data per thunderstorm cell
+            binary=l_mask==ii
+            az_shear_m=az_shear*binary
+            mfd_conv_m=mfd_conv*binary
+            if np.nanmax(abs(az_shear_m.flatten('C')))>=3:
+                print("Identifying anticyclonic shears")
+                # rotation object detection for both signs
+                rotation_pos=shear_group(rotation_pos, 1, 
+                                                            mfd_conv_m, 
+                                                            az_shear_m, 
+                                                            ii, 
+                                                            resolution, 
+                                                            distance, 
+                                                            shear, radar,
+                                                            radar["elevations"][el], el,
+                                                            radar["radars"][r], r,
+                                                            cartesian["indices"], timelist[t])
+                
+                rotation_neg=shear_group(rotation_neg, -1, 
+                                                            mfd_conv_m, 
+                                                            az_shear_m, 
+                                                            ii, 
+                                                            resolution, 
+                                                            distance, 
+                                                            shear, radar,
+                                                            radar["elevations"][el], el,
+                                                            radar["radars"][r], r,
+                                                            cartesian["indices"], timelist[t])
+    
+    return rotation_pos, rotation_neg

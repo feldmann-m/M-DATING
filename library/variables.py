@@ -10,7 +10,7 @@ import numpy as np
 import numpy.matlib as npm
 from netCDF4 import Dataset
 import pandas as pd
-import pyart
+# import pyart
 
 #%%
 def vars(dvdir,lomdir,outdir,codedir):#event, year):
@@ -135,20 +135,22 @@ def time(file):
     return time
 #%%
 def mask_coord(radar):
+    import pyart
     azimuths=np.arange(0,360,1)
     coord=[]
     for e in range(20):
         el=radar['angles'][e]
         print(el)
         ranges=np.arange(0.25,radar["elevation_ranges"][e],0.5)
-        c=np.zeros([2,len(azimuths),len(ranges)])
+        c=np.zeros([3,len(azimuths),len(ranges)])
         for r in range(len(ranges)):
             for az in azimuths:
                 x,y,z=pyart.core.antenna_to_cartesian(ranges[r], az, el)
                 c[0,az,r]=x
                 c[1,az,r]=y
+                c[2,az,r]=z
         coord.append(c)
-        np.save('mask_data/mask'+str(el)+'.npy',c)
+        np.save('mask_data/mask3d'+str(el)+'.npy',c)
     return coord
 
 def read_mask(radar):
@@ -156,6 +158,6 @@ def read_mask(radar):
     coord=[]
     for e in range(20):
         el=radar['angles'][e]
-        c=np.load('mask_data/mask'+str(el)+'.npy')
+        c=np.load('mask_data/mask3d'+str(el)+'.npy')
         coord.append(c)
     return coord
