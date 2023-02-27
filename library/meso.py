@@ -20,6 +20,30 @@ import library.variables as variables
 import library.transform as transform
 #%%
 def mask(mask, coord, radar, cartesian, r, el):
+    """
+    
+
+    Parameters
+    ----------
+    mask : 2D array
+        Cartesian grid of thunderstorm cells.
+    coord : list
+        list of coordinate conversions (look-up-table).
+    radar : dict
+        contains radar information.
+    cartesian : dict
+        contains coordinate information.
+    r : int
+        radar number.
+    el : int
+        elevation number.
+
+    Returns
+    -------
+    p_mask : 2D array
+        polar conversion for the given radar and elevation of the thunderstorm array.
+
+    """
     c_el=coord[el]
     cr_el=np.round(copy.deepcopy(c_el/1000)).astype(int)
     cr_el[0,:,:]+=cartesian["rx"][r]
