@@ -234,10 +234,15 @@ def main():
       rel=[]
       for r in rads:
           for el in els:
-              rel.append(r+el)
+              p_mask=meso.mask(mask,coord, radar, cartesian, int(r/100 -1), int(el-1))
+              print(r, el, np.nansum(p_mask.flatten()))
+              
+              if np.nansum(p_mask.flatten())>10:
+                  rel.append(r+el)
+                  
       radvar=radar, cartesian, path, specs, coord, files, shear, resolution, timelist, t, newlabels, mask
       with multiprocessing.Pool(10) as pool:
-          result=pool.starmap(radel_processor, zip(rel, repeat(radvar)))
+          result=pool.starmap_async(radel_processor, zip(rel, repeat(radvar)))
                                       
     
       # for r in radar["n_radars"]:
@@ -251,6 +256,8 @@ def main():
       # # JOIN RESULTS FROM RADARS
       # result=return_dict.values()
       # io.enablePrint()
+          print('getting results')
+          result=result.get()
       for n in range(0,len(result)):
           s_p, s_n = result[n]
           rotation_pos["shear_objects"].append(s_p["shear_objects"])
