@@ -527,9 +527,19 @@ def read_TRT(path, file=0, ttime=0):
     if flag==1:
         with open(file[0]) as f: gj = FeatureCollection(gs.load(f))
         trt_df=gpd.GeoDataFrame.from_features(gj['features'])
+        print(trt_df.lon.values.astype(float))
         chx, chy = transform.c_transform(trt_df.lon.values.astype(float),trt_df.lat.values.astype(float))
-        lat,lon=trt_df.geometry[0].boundary.xy
         trt_df['chx']=chx.astype(str); trt_df['chy']=chy.astype(str)
+        for n in range(len(trt_df)):
+            lat,lon=trt_df.iloc[n].geometry.boundary.xy
+            print(trt_df.iloc[n])
+            chx, chy = transform.c_transform(lon,lat)
+            # trt_df.iloc[n]['chx']=chx.astype(str); trt_df.iloc[n]['chy']=chy.astype(str)
+            #transform.c_transform(trt_df.iloc[n].lon.values,trt_df.iloc[n].lat.values)
+            ix=np.round((chx-o_x)/1000).astype(int)
+            iy=np.round((chy-o_y)/1000).astype(int)
+            rr, cc = polygon(iy, ix, cells.shape)
+            cells[rr,cc]=int(trt_df.traj_ID.iloc[n]);
     else:
         data=pd.read_csv(file).iloc[8:]
         headers=pd.read_csv(file).iloc[7:8].iloc[0][0].split()
@@ -553,13 +563,13 @@ def read_TRT(path, file=0, ttime=0):
             trt_df.loc[n,'chy']=chy
             lat=tt[:,1].astype(float); lon=tt[:,0].astype(float)
             # trt_df=trt_df.astype(str)
-    chx,chy=transform.c_transform(lon,lat)
-    ix=np.round((chx-o_x)/1000).astype(int)
-    iy=np.round((chy-o_y)/1000).astype(int)
-    rr, cc = polygon(iy, ix, cells.shape)
-    cells[rr,cc]=int(t[0].values);
-    
-    return trt_df, cells, ttime
+            chx,chy=transform.c_transform(lon,lat)
+            ix=np.round((chx-o_x)/1000).astype(int)
+            iy=np.round((chy-o_y)/1000).astype(int)
+            rr, cc = polygon(iy, ix, cells.shape)
+            cells[rr,cc]=int(t[0].values);
+    timelist=[str(ttime)]
+    return trt_df, cells, timelist
 
 
 def get_TRT(ttime, path):

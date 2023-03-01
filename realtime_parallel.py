@@ -6,11 +6,9 @@ Created on Mon Aug 17 15:49:37 2020
 @author: mfeldman
 """
 
-import multiprocessing
-# from itertools import repeat
-import numpy as np
-import argparse as ap
 #%%
+import argparse as ap
+
 parser = ap.ArgumentParser()
 parser.add_argument('--dvdir', type=str, required=False,default='/srn/data/zuerh450/')
 parser.add_argument('--lomdir', type=str, required=False,default='/srn/data/')
@@ -18,7 +16,9 @@ parser.add_argument('--outdir', type=str, required=False,default='/scratch/lom/m
 parser.add_argument('--codedir', type=str, required=False,default='/scratch/lom/mof/code/ELDES_MESO/')
 parser.add_argument('--time', type=str, required=True)
 args = parser.parse_args()
-
+#%%
+import multiprocessing
+import numpy as np
 import os
 import sys
 sys.path.append('/users/mfeldman/scripts/ELDES_MESO')
@@ -32,11 +32,9 @@ warnings.simplefilter('ignore',category=AstropyWarning)
 import timeit
 import library.variables as variables
 import library.io as io
-# import library.plot as plot
 import library.transform as transform
 import library.meso as meso
 import glob
-# import pyart
 
 #%% FUNCTIONS FOR PARALLELIZATION OF ELEVATION PROCESSING
 # MUST BE DEFINED IN MAIN SCRIPT
@@ -266,11 +264,9 @@ def cell_loop(ii, cellvar):
 #%% INITIALIZE PROCESSING
 # load case dates and times, load variables, launch timer
 time=args.time
-#event=sys.argv[2]
-#year=sys.argv[3]
 radar, cartesian, path, specs, files, shear, resolution=variables.vars(args.dvdir,args.lomdir,args.outdir,args.codedir)
 coord=variables.read_mask(radar)
-#io.makedir(path)
+
 try:
     os.mkdir(args.outdir+'/ROT/')
     print('Directory created')
@@ -283,19 +279,19 @@ try:
 except FileExistsError:
     print('Directory already exists')
 
-tower_list_p=[]
-tower_list_n=[]
+
 #%% PROCESSING CURRENT TIMESTEPS
 # launch parallelized rotation detection
 
 
 t=0
+# trt_df, trt_cells, timelist= io.read_TRT(path,0,time)
 trt_cells, timelist= io.get_TRT(time,path)
 t_tic=timeit.default_timer()
-#doy=timelist[t][:5]
+tower_list_p=[]
+tower_list_n=[]
 if len(trt_cells)>0:
-  labels=trt_cells[t]
-  newlabels=skim.dilation(labels,footprint=np.ones([5,5]))
+  newlabels=skim.dilation(trt_cells[0],footprint=np.ones([5,5]))
   mask=newlabels>0
   
   t_toc=timeit.default_timer()
@@ -412,6 +408,7 @@ tower_list_n.append(vert_n)
 t_toc=timeit.default_timer()
 print("Computation time timestep: [s] ",t_toc-t_tic)
 phist,nhist=io.read_histfile(path)
+print(time)
 phist,vert_p=meso.rot_hist(vert_p, phist,time)
 nhist,vert_n=meso.rot_hist(vert_n, nhist,time)
 io.write_histfile(phist,nhist,path)
