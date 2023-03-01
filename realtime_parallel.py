@@ -40,8 +40,8 @@ import glob
 
 #%% FUNCTIONS FOR PARALLELIZATION OF ELEVATION PROCESSING
 # MUST BE DEFINED IN MAIN SCRIPT
-def radel_processor (rel, radar, cartesian, path, specs, coord, files, shear, resolution,
-                    timelist, t, areas, mask, return_dict):
+def radel_processor (rel, radar, cartesian, path, specs, files, shear, resolution,
+                    timelist, t, l_mask, return_dict):
     """
     parallel processing of radars and elevations
 
@@ -106,12 +106,10 @@ def radel_processor (rel, radar, cartesian, path, specs, coord, files, shear, re
     myfinaldata, flag1 = io.read_del_data(dvfile)
     #COMPUTE MASK FROM TRT CONTOURS
     print(r, el)
-    p_mask=meso.mask(mask,coord, radar, cartesian, r, el)
-    l_mask=meso.mask(areas, coord, radar, cartesian, r, el)
+    # p_mask=meso.mask(mask,coord, radar, cartesian, r, el)
+    # l_mask=meso.mask(areas, coord, radar, cartesian, r, el)
     # exit if too few valid pixels or no velocity data
-    if np.nansum(p_mask.flatten())<6: 
-        return variables.meso(), variables.meso();
-    elif flag1 == -1: 
+    if flag1 == -1: 
         return variables.meso(), variables.meso();
     else:
         # derive azimuthal shear
@@ -128,12 +126,19 @@ def radel_processor (rel, radar, cartesian, path, specs, coord, files, shear, re
             return_dict2 = manager2.dict()
             jobs2 = []
             
-            cellvar=l_mask, az_shear, mfd_conv, rotation_pos, rotation_neg, distance, r, el, return_dict2
             for ii in ids:
-                p2 = multiprocessing.Process(target=cell_processor, args=(ii, cellvar))
-                p2.daemon=False
-                jobs2.append(p2)
-                p2.start()
+                binary=l_mask==ii
+                az_shear_m=az_shear*binary
+                mfd_conv_m=mfd_conv*binary
+                if np.nanmax(abs(az_shear_m.flatten('C')))>=3:
+                    io.enablePrint()
+                    print('launching subprocess for cell',r,el,ii)
+                    io.blockPrint()
+                    cellvar=az_shear_m, mfd_conv_m, rotation_pos, rotation_neg, distance, r, el, return_dict2
+                    p2 = multiprocessing.Process(target=cell_processor, args=(ii, cellvar))
+                    p2.daemon=False
+                    jobs2.append(p2)
+                    p2.start()
             # JOIN RESULTS FROM ELEVATIONS
             for proc in jobs2:
                 proc.join()
@@ -176,11 +181,8 @@ def cell_processor(ii, cellvar):
 
     """
     
-    l_mask, az_shear, mfd_conv, rotation_pos, rotation_neg, distance, r, el, return_dict2 = cellvar
+    az_shear_m, mfd_conv_m, rotation_pos, rotation_neg, distance, r, el, return_dict2 = cellvar
     
-    binary=l_mask==ii
-    az_shear_m=az_shear*binary
-    mfd_conv_m=mfd_conv*binary
     if np.nanmax(abs(az_shear_m.flatten('C')))>=3:
         print("Identifying rotation shears")
         # rotation object detection for both signs
@@ -341,15 +343,15 @@ if len(trt_cells)>0:
   
   for rel_i in rel:
       r=int(rel_i/100)-1; el=rel_i%100-1
-      p_mask=meso.mask(mask,coord, radar, cartesian, r, el)
-      print(rel_i,np.nansum(p_mask.flatten()))
+      l_mask=meso.mask(newlabels,coord, radar, cartesian, r, el)
+      print(rel_i,np.nansum((l_mask>0).flatten()))
       
-      if np.nansum(p_mask.flatten())>10:
+      if np.nansum((l_mask>0).flatten())>10:
           print('Launching process for ',r,el)
           io.blockPrint()
           p = multiprocessing.Process(target=radel_processor, args=(rel_i, radar, cartesian,
-                                    path, specs, coord, files, shear, resolution, timelist,
-                                    t, newlabels, mask, return_dict))
+                                    path, specs, files, shear, resolution, timelist,
+                                    t, l_mask, return_dict))
           jobs.append(p)
           p.start()
           io.enablePrint()

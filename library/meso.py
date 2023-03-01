@@ -442,16 +442,16 @@ def summarise_rot(tower_list, ID_list):
         for t in range(len(tower_list)):
             mytime=tower_list[t]
             myrot=mytime[mytime.ID==n]
-            rot_track=rot_track.append(myrot)
+            rot_track=pd.concat((rot_track,myrot),axis=1)#rot_track.append(myrot)
             if len(myrot)>0: tl.append(datetime.strptime(str(myrot.time.astype(int).values[0]), "%y%j%H%M"))
         dt=np.diff(tl)
         close=np.where(dt<=delta)
         # if len(rot_track)<2 or all(dt>delta):continue
         # if len(rot_track)<1: continue
-        ranges=rot_track.A_range.append([rot_track.D_range,rot_track.L_range,rot_track.P_range,rot_track.W_range])
+        ranges=pd.concat((rot_track.A_range,rot_track.D_range,rot_track.L_range,rot_track.P_range,rot_track.W_range),axis=1)
         # ranges=pd.DataFrame.from_records(rot_track.range.to_numpy())
         if len(close[0])<3 or np.nanmax(ranges)<20: continue
-        else: rotation=rotation.append(rot_track)
+        else: rotation=pd.concat((rotation,rot_track),axis=1)#rotation.append(rot_track)
     return rotation
 
 def rot_hist(tower_list, hist,time):
@@ -477,9 +477,9 @@ def rot_hist(tower_list, hist,time):
                 h.dist=np.nanmax([rr,h.dist])
                 if h.dist >= 20: tower_list.dist.iat[n]=1
                 h.latest=int(time)
-                hist2=hist2.append(h) #pd.concat([hist2,h])
+                hist2=pd.concat((hist2,h),axis=1)#hist2.append(h) #pd.concat([hist2,h])
         if a==0:
-            hist2=hist2.append(h) #pd.concat([hist2,h])
+            hist2=pd.concat((hist2,h),axis=1)#hist2.append(h) #pd.concat([hist2,h])
     for n in range(len(IDs)):
         if IDs[n] not in list(hist2.ID):
             t=tower_list.iloc[n]
@@ -489,7 +489,7 @@ def rot_hist(tower_list, hist,time):
             h.dist=np.nanmax([t.A_range,t.D_range,t.L_range,t.P_range,t.W_range])
             if h.dist.values[0] >= 20: tower_list.dist.iat[n]=1
             h.latest=int(time)
-            hist2=hist2.append(h) #pd.concat([hist2,h])
+            hist2=pd.concat((hist2,h),axis=1)#hist2.append(h) #pd.concat([hist2,h])
     tower_list.flag=tower_list.cont*tower_list.dist
     return hist2,tower_list
 

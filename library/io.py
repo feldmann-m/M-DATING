@@ -5,10 +5,11 @@ Created on Fri Jun  5 17:05:27 2020
 
 @author: feldmann
 """
-
+print('importing pyart readers')
 from pyart.aux_io import read_file_py
 from pyart.aux_io import read_metranet
 from pyart.aux_io import read_cartesian_metranet
+print('imported pyart readers')
 import numpy as np
 import os
 import sys
