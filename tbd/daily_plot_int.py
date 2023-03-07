@@ -26,6 +26,7 @@ args.lomdir='/scratch/mfeldman/realtime/'
 args.outdir='/scratch/mfeldman/realtime/'
 args.codedir='/users/mfeldman/scripts/ELDES_MESO/'
 args.time='221790745'
+args.day='22179'
 #%%
 
 import os

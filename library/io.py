@@ -523,22 +523,24 @@ def read_TRT(path, file=0, ttime=0):
     else:
         if 'json' in file: flag=1; ttime=file[-20:-11]
         else: flag=0; ttime=file[-15:-6]
+        file=[file]
     
     if flag==1:
         with open(file[0]) as f: gj = FeatureCollection(gs.load(f))
         trt_df=gpd.GeoDataFrame.from_features(gj['features'])
-        print(trt_df.lon.values.astype(float))
+        # print(trt_df.lon.values.astype(float))
         chx, chy = transform.c_transform(trt_df.lon.values.astype(float),trt_df.lat.values.astype(float))
         trt_df['chx']=chx.astype(str); trt_df['chy']=chy.astype(str)
         for n in range(len(trt_df)):
-            lat,lon=trt_df.iloc[n].geometry.boundary.xy
-            print(trt_df.iloc[n])
+            lon,lat=trt_df.iloc[n].geometry.boundary.xy
+            # print(trt_df.iloc[n])
             chx, chy = transform.c_transform(lon,lat)
             # trt_df.iloc[n]['chx']=chx.astype(str); trt_df.iloc[n]['chy']=chy.astype(str)
             #transform.c_transform(trt_df.iloc[n].lon.values,trt_df.iloc[n].lat.values)
             ix=np.round((chx-o_x)/1000).astype(int)
             iy=np.round((chy-o_y)/1000).astype(int)
             rr, cc = polygon(iy, ix, cells.shape)
+            # print(lat,lon,chx,chy,ix,iy)
             cells[rr,cc]=int(trt_df.traj_ID.iloc[n]);
     else:
         data=pd.read_csv(file).iloc[8:]
@@ -546,7 +548,7 @@ def read_TRT(path, file=0, ttime=0):
         trt_df=pd.DataFrame()
         for n in range(len(data)):
             t=data.iloc[n].str.split(';',expand=True)
-            trt_df.loc[n,'ID']=int(t[0].values)
+            trt_df.loc[n,'traj_ID']=int(t[0].values)
             trt_df.loc[n,'time']=int(t[1].values)
             trt_df.loc[n,'lon']=t[2].values.astype(float)
             trt_df.loc[n,'lat']=t[3].values.astype(float)
@@ -568,8 +570,9 @@ def read_TRT(path, file=0, ttime=0):
             iy=np.round((chy-o_y)/1000).astype(int)
             rr, cc = polygon(iy, ix, cells.shape)
             cells[rr,cc]=int(t[0].values);
+    # print(np.nanmax(cells))
     timelist=[str(ttime)]
-    return trt_df, cells, timelist
+    return trt_df, [cells], timelist
 
 
 def get_TRT(ttime, path):

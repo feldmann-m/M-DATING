@@ -154,9 +154,9 @@ def radel_processor (rel, radar, cartesian, path, specs, files, shear, resolutio
                 rotation_neg["prop"]=pd.concat([rotation_neg["prop"],s_n["prop"]], ignore_index=True)
                 rotation_neg["shear_ID"].append(s_n["shear_ID"])
         else:
-            cellvar=l_mask, az_shear, mfd_conv, rotation_pos, rotation_neg, distance, r, el
+            cellvar=l_mask, az_shear, mfd_conv, rotation_pos, rotation_neg, distance, resolution, shear, radar, coord, timelist, r, el
             for ii in ids:
-                rotation_pos, rotation_neg = cell_loop(ii, cellvar)
+                rotation_pos, rotation_neg = meso.cell_loop(ii, cellvar)
 
     
     return_dict[r*20+el]= rotation_pos, rotation_neg
@@ -208,57 +208,7 @@ def cell_processor(ii, cellvar):
     
     return_dict2[ii]= rotation_pos, rotation_neg
     
-def cell_loop(ii, cellvar):
-    """
-    
 
-    Parameters
-    ----------
-    ii : int
-        thunderstorm cell ID.
-    cellvar : tuple
-        contains necessary variables.
-
-    Returns
-    -------
-    rotation_pos : dict
-        positive rotation detections.
-    rotation_neg : dict
-        negative rotation detections.
-
-    """
-    
-    l_mask, az_shear, mfd_conv, rotation_pos, rotation_neg, distance, r, el= cellvar
-    
-    binary=l_mask==ii
-    az_shear_m=az_shear*binary
-    mfd_conv_m=mfd_conv*binary
-    if np.nanmax(abs(az_shear_m.flatten('C')))>=3:
-        print("Identifying rotation shears")
-        # rotation object detection for both signs
-        rotation_pos=meso.shear_group(rotation_pos, 1, 
-                                                    mfd_conv_m, 
-                                                    az_shear_m, 
-                                                    ii, 
-                                                    resolution, 
-                                                    distance, 
-                                                    shear, radar,
-                                                    radar["elevations"][el], el,
-                                                    radar["radars"][r], r,
-                                                    coord[el], timelist[t])
-        
-        rotation_neg=meso.shear_group(rotation_neg, -1, 
-                                                    mfd_conv_m, 
-                                                    az_shear_m, 
-                                                    ii, 
-                                                    resolution, 
-                                                    distance, 
-                                                    shear, radar,
-                                                    radar["elevations"][el], el,
-                                                    radar["radars"][r], r,
-                                                    coord[el], timelist[t])
-    
-    return rotation_pos, rotation_neg
 
 
 #%% INITIALIZE PROCESSING
@@ -285,8 +235,8 @@ except FileExistsError:
 
 
 t=0
-# trt_df, trt_cells, timelist= io.read_TRT(path,0,time)
-trt_cells, timelist= io.get_TRT(time,path)
+trt_df, trt_cells, timelist= io.read_TRT(path,0,time)
+# trt_cells, timelist= io.get_TRT(time,path)
 t_tic=timeit.default_timer()
 tower_list_p=[]
 tower_list_n=[]

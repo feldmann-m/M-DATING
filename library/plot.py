@@ -167,9 +167,9 @@ def plot_cart_day(trtcells,vert_p,vert_n, imtitle, savepath, imname, radar):
     p0=plt.imshow(background, origin='lower')
     p1=plt.scatter((np.array(radar["x"])- o_x)/1000,(np.array(radar["y"])- o_y)/1000,s=5,c='black',marker=".")
 
-    ids=np.unique(trtcells.ID)
+    ids=np.unique(trtcells.traj_ID)
     for t_id in ids:
-        tcell=trtcells[trtcells.ID==t_id]
+        tcell=trtcells[trtcells.traj_ID==t_id]
         pcell=vert_p[vert_p.ID==t_id]
         ncell=vert_n[vert_n.ID==t_id]
         if np.nansum(pcell.flag)+np.nansum(ncell.flag)==0: continue

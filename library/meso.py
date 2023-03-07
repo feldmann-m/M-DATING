@@ -598,3 +598,55 @@ def proc_el(r, el, radar, cartesian, path, specs, coord, files, shear, resolutio
                                                             cartesian["indices"], timelist[t])
     
     return rotation_pos, rotation_neg
+
+def cell_loop(ii, cellvar):
+    """
+    
+
+    Parameters
+    ----------
+    ii : int
+        thunderstorm cell ID.
+    cellvar : tuple
+        contains necessary variables.
+
+    Returns
+    -------
+    rotation_pos : dict
+        positive rotation detections.
+    rotation_neg : dict
+        negative rotation detections.
+
+    """
+    
+    l_mask, az_shear, mfd_conv, rotation_pos, rotation_neg, distance, resolution, shear, radar, coord, timelist, r, el= cellvar
+    t=0
+    binary=l_mask==ii
+    az_shear_m=az_shear*binary
+    mfd_conv_m=mfd_conv*binary
+    if np.nanmax(abs(az_shear_m.flatten('C')))>=3:
+        print("Identifying rotation shears")
+        # rotation object detection for both signs
+        rotation_pos=shear_group(rotation_pos, 1, 
+                                                    mfd_conv_m, 
+                                                    az_shear_m, 
+                                                    ii, 
+                                                    resolution, 
+                                                    distance, 
+                                                    shear, radar,
+                                                    radar["elevations"][el], el,
+                                                    radar["radars"][r], r,
+                                                    coord[el], timelist[t])
+        
+        rotation_neg=shear_group(rotation_neg, -1, 
+                                                    mfd_conv_m, 
+                                                    az_shear_m, 
+                                                    ii, 
+                                                    resolution, 
+                                                    distance, 
+                                                    shear, radar,
+                                                    radar["elevations"][el], el,
+                                                    radar["radars"][r], r,
+                                                    coord[el], timelist[t])
+    
+    return rotation_pos, rotation_neg

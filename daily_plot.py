@@ -39,7 +39,7 @@ from geojson import FeatureCollection
 day=args.day
 #%%
 radar, cartesian, path, specs, files, shear, resolution=variables.vars(args.dvdir,args.lomdir,args.outdir,args.codedir)
-trtfiles=glob.glob(path["lomdata"]+'TRTC/*'+day+'*.trt')
+trtfiles=glob.glob(path["lomdata"]+'TRTC/*'+day+'*.json')
 trtfiles=sorted(trtfiles)
 pfiles=glob.glob(path["outdir"]+'ROT/'+'PROT*'+day+'*.json')
 pfiles=sorted(pfiles)
@@ -69,15 +69,15 @@ vert_n=pd.DataFrame(columns=['geometry', 'ID', 'time', 'x', 'y', 'dz', 'A', 'D',
        'rank_0', 'rank_10', 'rank_25', 'rank_50', 'rank_75', 'rank_90',
        'rank_100', 'rank_IQR', 'rank_mean', 'cont', 'dist', 'flag'])
 for file in trtfiles:
-    print(file)
+    # print(file)
     tdat,tcells,timelist=io.read_TRT(path,file=file)
-    trtcells=trtcells.append(tdat)
+    trtcells=pd.concat((trtcells,tdat),axis=0)#trtcells.append(tdat)
 for nfile in nfiles:
     with open(nfile) as f: gj = FeatureCollection(gs.load(f))
-    vert_n=vert_n.append(gpd.GeoDataFrame.from_features(gj['features']))
+    vert_n=pd.concat((vert_n,gpd.GeoDataFrame.from_features(gj['features'])),axis=0)#vert_n.append(gpd.GeoDataFrame.from_features(gj['features']))
 for pfile in pfiles:
     with open(pfile) as f: gj = FeatureCollection(gs.load(f))
-    vert_p=vert_p.append(gpd.GeoDataFrame.from_features(gj['features']))
+    vert_p=pd.concat((vert_p,gpd.GeoDataFrame.from_features(gj['features'])),axis=0)#vert_p.append(gpd.GeoDataFrame.from_features(gj['features']))
 #%%
 
 
