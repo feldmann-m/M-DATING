@@ -113,6 +113,20 @@ def meso():
             }
     return obj
 
+def rot_df():
+    df=pd.DataFrame(columns=["ID", "time", "radar","x", "y", "dz",
+                                "A","D","L","P","W","A_range","D_range","L_range",
+                                "P_range","W_range","A_n","D_n","L_n","P_n","W_n",
+                                "A_el","D_el","L_el","P_el","W_el",
+                                "size_sum","size_mean","vol_sum","vol_mean",
+                                "z_0","z_10", "z_25","z_50","z_75","z_90","z_100","z_IQR","z_mean",
+                                "r_0","r_10", "r_25","r_50","r_75","r_90","r_100","r_IQR","r_mean",
+                                "v_0","v_10", "v_25","v_50","v_75","v_90","v_100","v_IQR","v_mean",
+                                "d_0","d_10", "d_25","d_50","d_75","d_90","d_100","d_IQR","d_mean",
+                                "rank_0","rank_10", "rank_25","rank_50","rank_75","rank_90","rank_100","rank_IQR","rank_mean",
+                                ])
+    return df
+
 def distance(myfinaldata, resolution):
     distance=np.arange(0.5*resolution, myfinaldata.shape[1]*resolution 
                        + 0.5*resolution, resolution)

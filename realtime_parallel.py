@@ -4,9 +4,15 @@
 Created on Mon Aug 17 15:49:37 2020
 
 @author: mfeldman
+
+Main script to process a single timestep
+
+parallelized operations, not suited to run in an interactive editor
+
+Called for realtime processing
 """
 
-#%%
+#%% INPUT OPTIONS
 import argparse as ap
 
 parser = ap.ArgumentParser()
@@ -16,7 +22,7 @@ parser.add_argument('--outdir', type=str, required=False,default='/scratch/lom/m
 parser.add_argument('--codedir', type=str, required=False,default='/scratch/lom/mof/code/ELDES_MESO/')
 parser.add_argument('--time', type=str, required=True)
 args = parser.parse_args()
-#%%
+#%% IMPORT LIBRARIES
 import multiprocessing
 import numpy as np
 import os
@@ -30,26 +36,131 @@ import warnings
 from astropy.utils.exceptions import AstropyWarning
 warnings.simplefilter('ignore',category=AstropyWarning)
 import timeit
+import glob
+#%% IMPORT FUNCTIONS
 import library.variables as variables
 import library.io as io
 import library.transform as transform
 import library.meso as meso
-import glob
 
-#%% FUNCTIONS FOR PARALLELIZATION OF ELEVATION PROCESSING
-# MUST BE DEFINED IN MAIN SCRIPT
+#%% MAIN FUNCTIONS
+def main():
+    # INITIALIZE PROCESSING
+    # load case dates and times, load variables, launch timer
+    time=args.time
+    radar, cartesian, path, specs, files, shear, resolution=variables.vars(args.dvdir,args.lomdir,args.outdir,args.codedir)
+    coord=variables.read_mask(radar)
+    
+    # make output directories
+    try:
+        os.mkdir(args.outdir+'/ROT/')
+        print('Directory created')
+    except FileExistsError:
+        print('Directory already exists')
+
+    try:
+        os.mkdir(args.outdir+'/IM/')
+        print('Directory created')
+    except FileExistsError:
+        print('Directory already exists')
+
+    # get thunderstorm data
+    t=0
+    trt_df, trt_cells, timelist= io.read_TRT(path,0,time)
+    t_tic=timeit.default_timer()
+    if len(trt_df)>0:
+      # if any thunderstorm cells exist, continue algorithm
+      newlabels=skim.dilation(trt_cells[0],footprint=np.ones([5,5]))
+      
+      
+      print("starting rotation detection, analysing timestep: ", timelist[t])
+      # ROTATION TRACKING
+      r_tic=timeit.default_timer()
+      
+      rotation_pos=variables.meso(); rotation_neg=variables.meso()
+      # Make unique radar-elevation IDs
+      els=np.arange(1,21)
+      rads=np.arange(100,501,100)
+      rel=[]
+      for r in rads:
+          for el in els:
+              rel.append(r+el)
+      
+      # Prepare parallel processes
+      if __name__ == '__main__':
+          manager = multiprocessing.Manager()
+          return_dict = manager.dict()
+          jobs = []
+      
+      for rel_i in rel:
+          #Check if any thunderstorm in radar-elevation domain
+          r=int(rel_i/100)-1; el=rel_i%100-1
+          l_mask=meso.mask(newlabels,coord, radar, cartesian, r, el)
+          
+          if np.nansum((l_mask>0).flatten())>6:
+              #Call parallel process, block print statements in parallelized section
+              print('Launching process for ',r+1,el+1)
+              io.blockPrint()
+              p = multiprocessing.Process(target=radel_processor, args=(rel_i, radar, cartesian,
+                                        path, specs, files, shear, resolution, timelist,
+                                        t, l_mask, coord[el], return_dict))
+              jobs.append(p)
+              p.start()
+              io.enablePrint()
+
+      for proc in jobs:
+          proc.join()
+      # Join results from parallel processes
+      result=return_dict.values()
+      
+      for n in range(0,len(result)):
+          # Sort results into corresponding variables
+          s_p, s_n = result[n]
+          rotation_pos["shear_objects"].append(s_p["shear_objects"])
+          rotation_pos["prop"]=pd.concat([rotation_pos["prop"],s_p["prop"]], ignore_index=True)
+          rotation_pos["shear_ID"].append(s_p["shear_ID"])
+          rotation_neg["shear_objects"].append(s_n["shear_objects"])
+          rotation_neg["prop"]=pd.concat([rotation_neg["prop"],s_n["prop"]], ignore_index=True)
+          rotation_neg["shear_ID"].append(s_n["shear_ID"])
+          
+      # MERGE OBJECT DETECTION FROM ALL RADARS AND ELEVATIONS -> vertical continuity check
+      vert_p, v_ID_p = meso.tower(rotation_pos, newlabels, radar, shear, r, timelist[t], path)
+      vert_n, v_ID_n = meso.tower(rotation_neg, newlabels, radar, shear, r, timelist[t], path)
+      
+      r_toc=timeit.default_timer()
+      print("time elapsed rotation detection [s]: ", r_toc-r_tic)
+      
+    else:
+      # In case of no thunderstorms, return empty result dataframe
+      vert_p=variables.rot_df()
+      vert_n=variables.rot_df()
+
+    t_toc=timeit.default_timer()
+    print("Computation time timestep: [s] ",t_toc-t_tic)
+    # Read file with Mesocyclone history
+    phist,nhist=io.read_histfile(path)
+    # Time continuity and range check for new history file
+    phist,vert_p=meso.rot_hist(vert_p, phist,time)
+    nhist,vert_n=meso.rot_hist(vert_n, nhist,time)
+    # Overwrite history file
+    io.write_histfile(phist,nhist,path)
+    # Write mesocyclone products
+    pfile=path["outdir"]+'ROT/'+'PROT'+str(time)+'.json'
+    io.write_geojson(vert_p,pfile)
+    nfile=path["outdir"]+'ROT/'+'NROT'+str(time)+'.json'
+    io.write_geojson(vert_n,nfile)
+
+
+
 def radel_processor (rel, radar, cartesian, path, specs, files, shear, resolution,
-                    timelist, t, l_mask, return_dict):
+                    timelist, t, l_mask, coord, return_dict):
     """
     parallel processing of radars and elevations
 
     Parameters
     ----------
     rel : int
-        radar x elevation number.
-    radvar : dict containing the following variables
-    
-    -----------
+        unique radar-elevation number.
     radar : dict
         variable containing all radar information (see library.variables.py).
     cartesian : dict
@@ -84,295 +195,49 @@ def radel_processor (rel, radar, cartesian, path, specs, files, shear, resolutio
 
     """
     
-    # radar, cartesian, path, specs, coord, files, shear, resolution, timelist, t, areas, mask = radvar
-    
-    print('rel is', rel)
+    print('Radar-elevation is', rel)
+    # Regain radar and elevation numbers
     r=int(rel/100)-1
     el=rel%100-1
-    
-    
     print("Analysing radar: ",r+1,", elevation: ",el+1)
-    #rotation_pos, rotation_neg= meso.proc_el(r, el, radar, cartesian, path, specs, coord, files, shear, resolution, timelist, t, areas, mask)
     
+    # Initialize rotation dictionaries
     rotation_pos=variables.meso()
     rotation_neg=variables.meso()
     
-    
+    # Find and read velocity file
     dvfile=glob.glob(path["dvdata"]+'DV'+radar["radars"][r]+'/*'+timelist[t]+'*.8'+radar["elevations"][el])[0]
-    # dvfile=path["temp"]+'DV'+radar["radars"][r]+'/DV'+radar["radars"][r]+timelist[t] \
-    #         +'7L'+specs["sweep_ID_DV"]+radar["elevations"][el]
-    myfinaldata, flag1 = io.read_del_data(dvfile)
-    #COMPUTE MASK FROM TRT CONTOURS
-    print(r, el)
-    # p_mask=meso.mask(mask,coord, radar, cartesian, r, el)
-    # l_mask=meso.mask(areas, coord, radar, cartesian, r, el)
-    # exit if too few valid pixels or no velocity data
+    dvdata, flag1 = io.read_del_data(dvfile)
+    
+    # exit if no velocity data
     if flag1 == -1: 
         return variables.meso(), variables.meso();
     else:
         # derive azimuthal shear
         nyquist=radar["nyquist"][el]
-        mfd_conv=transform.conv(myfinaldata)
-        distance=variables.distance(myfinaldata, resolution)
-        mfd_conv[:,40:]=myfinaldata[:,40:]
+        mfd_conv=transform.conv(dvdata)
+        distance=variables.distance(dvdata, resolution)
+        mfd_conv[:,40:]=dvdata[:,40:]
         az_shear = transform.az_cd(mfd_conv, nyquist, 0.8*nyquist, resolution, 2)[0]
+        # initialize rotation variables
         rotation_pos=variables.meso(); rotation_neg=variables.meso()
+        # get thunderstorm IDs
         ids=np.unique(l_mask)
         ids=ids[ids>0]
-        if len(ids)>20:
-            manager2 = multiprocessing.Manager()
-            return_dict2 = manager2.dict()
-            jobs2 = []
-            
-            for ii in ids:
-                binary=l_mask==ii
-                az_shear_m=az_shear*binary
-                mfd_conv_m=mfd_conv*binary
-                if np.nanmax(abs(az_shear_m.flatten('C')))>=3:
-                    io.enablePrint()
-                    print('launching subprocess for cell',r,el,ii)
-                    io.blockPrint()
-                    cellvar=az_shear_m, mfd_conv_m, rotation_pos, rotation_neg, distance, r, el, return_dict2
-                    p2 = multiprocessing.Process(target=cell_processor, args=(ii, cellvar))
-                    p2.daemon=False
-                    jobs2.append(p2)
-                    p2.start()
-            # JOIN RESULTS FROM ELEVATIONS
-            for proc in jobs2:
-                proc.join()
-            result2=return_dict2.values()
-            
-            # with multiprocessing.Pool(len(ids)) as pool:
-            #     result=pool.starmap(cell_processor, zip(ids, repeat(cellvar)))
-                  
-            for n in range(0,len(result2)):
-                s_p, s_n = result2[n]
-                rotation_pos["shear_objects"].append(s_p["shear_objects"])
-                rotation_pos["prop"]=pd.concat([rotation_pos["prop"],s_p["prop"]], ignore_index=True)
-                rotation_pos["shear_ID"].append(s_p["shear_ID"])
-                rotation_neg["shear_objects"].append(s_n["shear_objects"])
-                rotation_neg["prop"]=pd.concat([rotation_neg["prop"],s_n["prop"]], ignore_index=True)
-                rotation_neg["shear_ID"].append(s_n["shear_ID"])
-        else:
-            cellvar=l_mask, az_shear, mfd_conv, rotation_pos, rotation_neg, distance, resolution, shear, radar, coord, timelist, r, el
-            for ii in ids:
-                rotation_pos, rotation_neg = meso.cell_loop(ii, cellvar)
+        # process each thunderstorm individually
+        cellvar=l_mask, az_shear, mfd_conv, rotation_pos, rotation_neg, distance, resolution, shear, radar, coord, timelist, r, el
+        for ii in ids:
+            rotation_pos, rotation_neg = meso.cell_loop(ii, cellvar)
 
-    
+    #return results from parallel processing
     return_dict[r*20+el]= rotation_pos, rotation_neg
-    
-def cell_processor(ii, cellvar):
-    """
-    
-
-    Parameters
-    ----------
-    ii : int
-        thunderstorm cell ID.
-    cellvar : tuple
-        contains necessary variables.
-
-    Returns
-    -------
-    return_dict2 : dict
-        contains dicts rotation_pos and rotation_neg with rotation detections.
-
-    """
-    
-    az_shear_m, mfd_conv_m, rotation_pos, rotation_neg, distance, r, el, return_dict2 = cellvar
-    
-    if np.nanmax(abs(az_shear_m.flatten('C')))>=3:
-        print("Identifying rotation shears")
-        # rotation object detection for both signs
-        rotation_pos=meso.shear_group(rotation_pos, 1, 
-                                                    mfd_conv_m, 
-                                                    az_shear_m, 
-                                                    ii, 
-                                                    resolution, 
-                                                    distance, 
-                                                    shear, radar,
-                                                    radar["elevations"][el], el,
-                                                    radar["radars"][r], r,
-                                                    coord[el], timelist[t])
-        
-        rotation_neg=meso.shear_group(rotation_neg, -1, 
-                                                    mfd_conv_m, 
-                                                    az_shear_m, 
-                                                    ii, 
-                                                    resolution, 
-                                                    distance, 
-                                                    shear, radar,
-                                                    radar["elevations"][el], el,
-                                                    radar["radars"][r], r,
-                                                    coord[el], timelist[t])
-    
-    return_dict2[ii]= rotation_pos, rotation_neg
-    
 
 
 
-#%% INITIALIZE PROCESSING
-# load case dates and times, load variables, launch timer
-time=args.time
-radar, cartesian, path, specs, files, shear, resolution=variables.vars(args.dvdir,args.lomdir,args.outdir,args.codedir)
-coord=variables.read_mask(radar)
+#%% CALL MAIN FUNCTION
 
-try:
-    os.mkdir(args.outdir+'/ROT/')
-    print('Directory created')
-except FileExistsError:
-    print('Directory already exists')
+if __name__ == "__main__":
+    main()
 
-try:
-    os.mkdir(args.outdir+'/IM/')
-    print('Directory created')
-except FileExistsError:
-    print('Directory already exists')
-
-
-#%% PROCESSING CURRENT TIMESTEPS
-# launch parallelized rotation detection
-
-
-t=0
-trt_df, trt_cells, timelist= io.read_TRT(path,0,time)
-# trt_cells, timelist= io.get_TRT(time,path)
-t_tic=timeit.default_timer()
-tower_list_p=[]
-tower_list_n=[]
-if len(trt_cells)>0:
-  newlabels=skim.dilation(trt_cells[0],footprint=np.ones([5,5]))
-  mask=newlabels>0
-  
-  t_toc=timeit.default_timer()
-  print("cell tracking time elapsed [s]: ", t_toc-t_tic)
-  
-  print("starting rotation detection")
-  # ROTATION TRACKING
-  r_tic=timeit.default_timer()
-  
-  towers_p=pd.DataFrame(columns=["ID", "time", "radar","x", "y", "dz",
-                              "A","D","L","P","W","A_range","D_range","L_range",
-                              "P_range","W_range","A_n","D_n","L_n","P_n","W_n",
-                              "A_el","D_el","L_el","P_el","W_el",
-                              "size_sum","size_mean","vol_sum","vol_mean",
-                              "z_0","z_10", "z_25","z_50","z_75","z_90","z_100","z_IQR","z_mean",
-                              "r_0","r_10", "r_25","r_50","r_75","r_90","r_100","r_IQR","r_mean",
-                              "v_0","v_10", "v_25","v_50","v_75","v_90","v_100","v_IQR","v_mean",
-                              "d_0","d_10", "d_25","d_50","d_75","d_90","d_100","d_IQR","d_mean",
-                              "rank_0","rank_10", "rank_25","rank_50","rank_75","rank_90","rank_100","rank_IQR","rank_mean",
-                              ])
-  towers_n=pd.DataFrame(columns=["ID", "time", "radar","x", "y", "dz",
-                              "A","D","L","P","W","A_range","D_range","L_range",
-                              "P_range","W_range","A_n","D_n","L_n","P_n","W_n",
-                              "A_el","D_el","L_el","P_el","W_el",
-                              "size_sum","size_mean","vol_sum","vol_mean",
-                              "z_0","z_10", "z_25","z_50","z_75","z_90","z_100","z_IQR","z_mean",
-                              "r_0","r_10", "r_25","r_50","r_75","r_90","r_100","r_IQR","r_mean",
-                              "v_0","v_10", "v_25","v_50","v_75","v_90","v_100","v_IQR","v_mean",
-                              "d_0","d_10", "d_25","d_50","d_75","d_90","d_100","d_IQR","d_mean",
-                              "rank_0","rank_10", "rank_25","rank_50","rank_75","rank_90","rank_100","rank_IQR","rank_mean",
-                              ])
-  rotation_pos=variables.meso(); rotation_neg=variables.meso()
-  els=np.arange(1,21)
-  rads=np.arange(100,501,100)
-  rel=[]
-  for r in rads:
-      for el in els:
-          rel.append(r+el)
-  print("Analysing timestep: ", timelist[t])
-  # PARALLEL RADAR PROCESSING
-  if __name__ == '__main__':
-      manager = multiprocessing.Manager()
-      return_dict = manager.dict()
-      jobs = []
-  
-  for rel_i in rel:
-      r=int(rel_i/100)-1; el=rel_i%100-1
-      l_mask=meso.mask(newlabels,coord, radar, cartesian, r, el)
-      print(rel_i,np.nansum((l_mask>0).flatten()))
-      
-      if np.nansum((l_mask>0).flatten())>10:
-          print('Launching process for ',r,el)
-          io.blockPrint()
-          p = multiprocessing.Process(target=radel_processor, args=(rel_i, radar, cartesian,
-                                    path, specs, files, shear, resolution, timelist,
-                                    t, l_mask, return_dict))
-          jobs.append(p)
-          p.start()
-          io.enablePrint()
-  # for r in radar["n_radars"]:
-  #     p = multiprocessing.Process(target=radar_processor, args=(r, radar, cartesian,
-  #                               path, specs, coord, files, shear, resolution, timelist,
-  #                               t, newlabels, mask, return_dict))
-  #     jobs.append(p)
-  #     p.start()
-  for proc in jobs:
-      proc.join()
-  # JOIN RESULTS FROM RADARS
-  result=return_dict.values()
-  
-  for n in range(0,len(result)):
-      s_p, s_n = result[n]
-      rotation_pos["shear_objects"].append(s_p["shear_objects"])
-      rotation_pos["prop"]=pd.concat([rotation_pos["prop"],s_p["prop"]], ignore_index=True)
-      rotation_pos["shear_ID"].append(s_p["shear_ID"])
-      rotation_neg["shear_objects"].append(s_n["shear_objects"])
-      rotation_neg["prop"]=pd.concat([rotation_neg["prop"],s_n["prop"]], ignore_index=True)
-      rotation_neg["shear_ID"].append(s_n["shear_ID"])
-      
-  # MERGE OBJECT DETECTION FROM RADARS
-  vert_p, v_ID_p = meso.tower(rotation_pos, newlabels, radar, shear, r, timelist[t], path)
-  vert_n, v_ID_n = meso.tower(rotation_neg, newlabels, radar, shear, r, timelist[t], path)
-  
-  r_toc=timeit.default_timer()
-  print("time elapsed [s]: ", r_toc-r_tic)
-  
-else:
-  vert_p=pd.DataFrame(columns=["ID", "time", "radar","x", "y", "dz",
-                              "A","D","L","P","W","A_range","D_range","L_range",
-                              "P_range","W_range","A_n","D_n","L_n","P_n","W_n",
-                              "A_el","D_el","L_el","P_el","W_el",
-                              "size_sum","size_mean","vol_sum","vol_mean",
-                              "z_0","z_10", "z_25","z_50","z_75","z_90","z_100","z_IQR","z_mean",
-                              "r_0","r_10", "r_25","r_50","r_75","r_90","r_100","r_IQR","r_mean",
-                              "v_0","v_10", "v_25","v_50","v_75","v_90","v_100","v_IQR","v_mean",
-                              "d_0","d_10", "d_25","d_50","d_75","d_90","d_100","d_IQR","d_mean",
-                              "rank_0","rank_10", "rank_25","rank_50","rank_75","rank_90","rank_100","rank_IQR","rank_mean",
-                              ])
-  vert_n=pd.DataFrame(columns=["ID", "time", "radar","x", "y", "dz",
-                              "A","D","L","P","W","A_range","D_range","L_range",
-                              "P_range","W_range","A_n","D_n","L_n","P_n","W_n",
-                              "A_el","D_el","L_el","P_el","W_el",
-                              "size_sum","size_mean","vol_sum","vol_mean",
-                              "z_0","z_10", "z_25","z_50","z_75","z_90","z_100","z_IQR","z_mean",
-                              "r_0","r_10", "r_25","r_50","r_75","r_90","r_100","r_IQR","r_mean",
-                              "v_0","v_10", "v_25","v_50","v_75","v_90","v_100","v_IQR","v_mean",
-                              "d_0","d_10", "d_25","d_50","d_75","d_90","d_100","d_IQR","d_mean",
-                              "rank_0","rank_10", "rank_25","rank_50","rank_75","rank_90","rank_100","rank_IQR","rank_mean",
-                              ])
-
-tower_list_p.append(vert_p)
-tower_list_n.append(vert_n)
-
-t_toc=timeit.default_timer()
-print("Computation time timestep: [s] ",t_toc-t_tic)
-phist,nhist=io.read_histfile(path)
-print(time)
-phist,vert_p=meso.rot_hist(vert_p, phist,time)
-nhist,vert_n=meso.rot_hist(vert_n, nhist,time)
-io.write_histfile(phist,nhist,path)
-pfile=path["outdir"]+'ROT/'+'PROT'+str(time)+'.json'
-io.write_geojson(vert_p,pfile)
-nfile=path["outdir"]+'ROT/'+'NROT'+str(time)+'.json'
-io.write_geojson(vert_n,nfile)
-##%%
-#b_file=glob.glob(path["lomdata"]+'BZC/*'+str(time)+'*')
-#metranet=pyart.aux_io.read_cartesian_metranet(b_file[0],reader='python')
-#background=metranet.fields['probability_of_hail']['data'][0,:,:]
-#xp=vert_p.x; yp=vert_p.y; sp=np.nansum([vert_p.A_n,vert_p.D_n,vert_p.L_n,vert_p.P_n,vert_p.W_n]);fp=vert_p.flag;cp=vert_p.rank_90
-#xn=vert_n.x; yn=vert_n.y; sn=np.nansum([vert_n.A_n,vert_n.D_n,vert_n.L_n,vert_n.P_n,vert_n.W_n]);fn=vert_n.flag;cn=vert_n.rank_90
-#imtitle='Detected mesocyclones on POH background';savepath=path["outdir"]+'IM/';imname='ROT'+str(time+'.png')
-#plot.plot_cart_obj(background, xp, yp, sp*20, fp, xn, yn, sn*20, fn, cp, cn, imtitle, savepath, imname, radar)
 
 

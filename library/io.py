@@ -495,18 +495,27 @@ def TRT_to_grid(year, event, path):
 def read_TRT(path, file=0, ttime=0):
     """
     Read .trt or .json file containing TRT output
+    Returns dataframe with attributes and gridded TRT cells
 
     Parameters
     ----------
-    ttime : TYPE
-        DESCRIPTION.
-    path : TYPE
-        DESCRIPTION.
 
+    path : string
+        path, where to look for files.
+    file: string
+        filename
+    ttime : string
+        timestep to find files for.
+    Requires either filename or timestep
+    
     Returns
     -------
     trt_df : dataframe
         TRT cells and attributes of the timestep.
+    cells: list
+        Gridded TRT cells per timestep
+    timelist: list
+        timesteps
 
     """
     
@@ -577,7 +586,7 @@ def read_TRT(path, file=0, ttime=0):
 
 def get_TRT(ttime, path):
     """
-    Extracts contours from TRT cells and produces gridded product for entire day
+    Extracts contours from TRT cells and produces gridded product
 
     Parameters
     ----------
@@ -623,54 +632,25 @@ def get_TRT(ttime, path):
     if np.nansum(cells.flatten())>0:cellist.append(cells); timelist.append(ttime)
     return cellist, timelist
 
-def get_TRT_file(file):
+
+def write_histfile(phist,nhist,path):
     """
-    Extracts contours from TRT cells and produces gridded product for entire day
+    Overwrites history file with new mesocyclone continuity information
 
     Parameters
     ----------
-    year : string
-        year in YYYY.
-    event : date in
-        YYDDD.
-    path : dict
-        dict containing all paths.
+    phist : dataframe
+        positive mesocyclone continuity information.
+    nhist : dataframe
+        negative mesocyclone continuity information.
+    path : string
+        filepath to save histfile.
 
     Returns
     -------
-    cellist : list of arrays
-        list of all 2D gridded TRT cells.
-    timelist : list
-        list of all valid timesteps.
+    None.
 
     """
-    o_x=254000
-    o_y=-159000
-    lx=710; ly=640
-    # cells=np.zeros([ly,lx])
-    #cpath='/store/mch/msrad/radar/swiss/data/'+year+'/'+event
-    cellist=[]; timelist=[]
-    cells=np.zeros([ly,lx])
-    cells=np.zeros([ly,lx])
-    print(file)
-    data=pd.read_csv(file).iloc[8:]
-    for n in range(len(data)):
-        t=data.iloc[n].str.split(';',expand=True)
-        TRT_ID=int(t[0].values)
-        time=int(t[1].values)
-        if int(time)>220000000: tt=np.array(t)[0,82:-1]
-        else: tt=np.array(t)[0,25:-1]
-        tt=np.reshape(tt,[int(len(tt)/2),2])
-        tlat=tt[:,1].astype(float); tlon=tt[:,0].astype(float)
-        chx,chy=transform.c_transform(tlon,tlat)
-        ix=np.round((chx-o_x)/1000).astype(int)
-        iy=np.round((chy-o_y)/1000).astype(int)
-        rr, cc = polygon(iy, ix, cells.shape)
-        cells[rr,cc]=int(t[0].values);
-    if np.nansum(cells.flatten())>0:cellist.append(cells); timelist.append(time)
-    return cellist, timelist
-
-def write_histfile(phist,nhist,path):
     file=glob.glob(path["outdir"]+'ROT/'+'*hist*')
     try: 
         if len(file)>0:
@@ -681,6 +661,22 @@ def write_histfile(phist,nhist,path):
     nhist.to_csv(path["outdir"]+'ROT/'+'nhist.txt', header=nhist.columns, index=range(len(nhist)), sep=';', mode='a')
     
 def read_histfile(path):
+    """
+    Reads history file with new mesocyclone continuity information
+
+    Parameters
+    ----------
+    path : string
+        filepath to save histfile.
+
+    Returns
+    -------
+    phist : dataframe
+        positive mesocyclone continuity information.
+    nhist : dataframe
+        negative mesocyclone continuity information.
+
+    """
     try:
         phist=pd.read_csv(path["outdir"]+'ROT/'+'phist.txt', sep=';')
         phist= phist.drop(columns='Unnamed: 0')
@@ -694,6 +690,26 @@ def read_histfile(path):
     return phist,nhist
 
 def df_to_geojson(df, properties, lat='x', lon='y'):
+    """
+    Creates geojson with point geometry from dataframe
+
+    Parameters
+    ----------
+    df : dataframe
+        mesocyclone dataframe.
+    properties : list
+        names of properties in features collection.
+    lat : string, optional
+        replaces latitude with desired coordinate label. The default is 'x'.
+    lon : string, optional
+        replaces longitude with desired coordinate label. The default is 'y'.
+
+    Returns
+    -------
+    geojson : TYPE
+        DESCRIPTION.
+
+    """
     # create a new python dict to contain our geojson data, using geojson format
     geojson = {'type':'FeatureCollection', 'features':[]}
 
@@ -718,6 +734,21 @@ def df_to_geojson(df, properties, lat='x', lon='y'):
     return geojson
 
 def write_geojson(tower_list,file):
+    """
+    Write geojson output
+
+    Parameters
+    ----------
+    tower_list : list
+        list containing mesocyclone dataframes.
+    file : string
+        filename.
+
+    Returns
+    -------
+    None.
+
+    """
     prop=list(tower_list.columns)
     prop.remove('radar')
     data=df_to_geojson(tower_list,prop)
