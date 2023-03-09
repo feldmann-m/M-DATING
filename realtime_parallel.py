@@ -27,7 +27,6 @@ import multiprocessing
 import numpy as np
 import os
 import sys
-sys.path.append('/users/mfeldman/scripts/ELDES_MESO')
 sys.path.append(args.codedir)
 import pandas as pd
 pd.options.mode.chained_assignment = None
