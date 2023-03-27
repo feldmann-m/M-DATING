@@ -23,6 +23,7 @@ sys.path.append(args.codedir)
 import os
 os.environ['METRANETLIB_PATH'] = '/srn/las/idl/lib/radlib/'
 import pandas as pd
+import skimage.morphology as skim
 pd.options.mode.chained_assignment = None
 import warnings
 from astropy.utils.exceptions import AstropyWarning
@@ -32,6 +33,7 @@ import numpy as np
 import geojson as gs
 import geopandas as gpd
 from geojson import FeatureCollection
+import pyart
 #%% import functions
 import library.variables as variables
 import library.plot as plot
@@ -58,8 +60,8 @@ def main():
         nfiles=nfiles[:iii]
     else:
         trtfiles=trtfiles[i-12:i]
-        pfiles=pfiles[i-12:ii]
-        nfiles=nfiles[i-12:iii]
+        pfiles=pfiles[ii-12:ii]
+        nfiles=nfiles[iii-12:iii]
     # pfiles=glob.glob(path["outdir"]+'ROT/'+'PROT*'+day+'*.json')
     # pfiles=sorted(pfiles)
     # nfiles=glob.glob(path["outdir"]+'ROT/'+'NROT*'+day+'*.json')
@@ -100,9 +102,35 @@ def main():
         with open(pfile) as f: gj = FeatureCollection(gs.load(f))
         vert_p=pd.concat((vert_p,gpd.GeoDataFrame.from_features(gj['features'])),axis=0)#vert_p.append(gpd.GeoDataFrame.from_features(gj['features']))
     print(vert_p); print(vert_n); print(trtcells)
+    #%%read TRT file of timestep, use to cut out precipitation data -> displayed in background
+    cells,timelist=io.get_TRT(time, path)
+    if len(cells)>0:
+      try:
+        b_file=glob.glob(path["lomdata"]+'CZC/*'+str(time)+'*')[0]
+        print(b_file)
+        metranet=pyart.aux_io.read_cartesian_metranet(b_file)
+        czc=metranet.fields['maximum_echo']['data'][0,:,:]
+        #newcells=skim.dilation(cells[0],footprint=np.ones([5,5]))
+        #newcells[newcells==0]=np.nan
+        #newcells[newcells>0]=1
+        #background=newcells*czc
+        import copy
+        background=copy.deepcopy(czc)
+        background[background<35]=np.nan
+      except:
+        b_file=glob.glob(path["lomdata"]+'CZC/*'+str(time)+'*')[0]
+        print('Problem with file',b_file)
+        newcells=skim.dilation(cells[0],footprint=np.ones([5,5]))
+        newcells[newcells==0]=np.nan
+        newcells[newcells>0]=1
+        background=newcells
+    #if generation of background fails, is generated empty
+    else:
+      background=np.zeros([640,710])
+      background[:]=np.nan
     #%% generate plot
     imtitle='Detected mesocyclones on VIL background';savepath=path["outdir"]+'IM/';imname='ROThist'+str(time+'.png')
-    plot.plot_cart_hist(time,trtcells,vert_p,vert_n, imtitle, savepath, imname, radar)
+    plot.plot_cart_hist(time,background,trtcells,vert_p,vert_n, imtitle, savepath, imname, radar)
 
 #%% CALL MAIN FUNCTION
 

@@ -140,7 +140,7 @@ def plot_cart_obj(background, xp, yp, sp, fp, xn, yn, sn, fn, cp, cn, imtitle, s
     plt.savefig(namefig,transparent=True,bbox_inches='tight',dpi=300,pad_inches=0)
     plt.close()
 
-def plot_cart_hist(time,trtcells,vert_p,vert_n, imtitle, savepath, imname, radar):
+def plot_cart_hist(time,background,trtcells,vert_p,vert_n, imtitle, savepath, imname, radar):
     """
     plots cartesian reflectivity and radar locations and detected mesocyclones and 2h history
 
@@ -163,9 +163,10 @@ def plot_cart_hist(time,trtcells,vert_p,vert_n, imtitle, savepath, imname, radar
     """
     o_x=254000
     o_y=-159000
-    background=np.zeros([640,710]); background[:]=np.nan
+    # background=np.zeros([640,710]); background[:]=np.nan
     fig=plt.figure(figsize=(6.4,7.1),frameon=False)#figsize=(14,10)
-    p0=plt.imshow(background, origin='lower')
+    cmap=plt.cm.turbo
+    p0=plt.imshow(background, origin='lower', vmin=35, vmax=65, cmap=cmap)
     p1=plt.scatter((np.array(radar["x"])- o_x)/1000,(np.array(radar["y"])- o_y)/1000,s=5,c='black',marker=".")
     idds=pd.concat([vert_p,vert_n])
     ids=np.unique(idds.ID[idds.time==time]).astype(int)
