@@ -5,7 +5,8 @@ Created on Wed Feb  1 16:04:19 2023
 
 @author: mfeldman
 
-Daily summarizing plot of mesocyclone activity
+Creates plots for radarlive from realtime production, includes history of past 2h
+run after realtime_parallel.py
 """
 #%% import settings
 import argparse as ap
@@ -14,7 +15,7 @@ parser.add_argument('--dvdir', type=str, required=False,default='/srn/data/zuerh
 parser.add_argument('--lomdir', type=str, required=False,default='/srn/data/')
 parser.add_argument('--outdir', type=str, required=False,default='/scratch/lom/mof/realtime/')
 parser.add_argument('--codedir', type=str, required=False,default='/scratch/lom/mof/code/ELDES_MESO/')
-parser.add_argument('--day', type=str, required=True)
+parser.add_argument('--time', type=str, required=True)
 args = parser.parse_args()
 #%% import external libraries
 import sys
@@ -27,6 +28,7 @@ import warnings
 from astropy.utils.exceptions import AstropyWarning
 warnings.simplefilter('ignore',category=AstropyWarning)
 import glob
+import numpy as np
 import geojson as gs
 import geopandas as gpd
 from geojson import FeatureCollection
@@ -37,16 +39,31 @@ import library.io as io
 #%% Main function
 def main():
     #import variables
-    day=args.day
+    time=args.time
     
     radar, cartesian, path, specs, files, shear, resolution=variables.vars(args.dvdir,args.lomdir,args.outdir,args.codedir)
     #find TRT and rotation files of given day
-    trtfiles=glob.glob(path["lomdata"]+'TRTC/*'+day+'*.json')
-    trtfiles=sorted(trtfiles)
-    pfiles=glob.glob(path["outdir"]+'ROT/'+'PROT*'+day+'*.json')
-    pfiles=sorted(pfiles)
-    nfiles=glob.glob(path["outdir"]+'ROT/'+'NROT*'+day+'*.json')
-    nfiles=sorted(nfiles)
+    trtfiles=np.array(sorted(glob.glob(path["lomdata"]+'TRTC/*.json')))
+    trtfile=np.array(sorted(glob.glob(path["lomdata"]+'TRTC/*'+time+'*.json')))
+    pfiles=np.array(sorted(glob.glob(path["outdir"]+'ROT/'+'PROT*.json')))
+    pfile=np.array(sorted(glob.glob(path["outdir"]+'ROT/'+'PROT*'+time+'*.json')))
+    nfiles=np.array(sorted(glob.glob(path["outdir"]+'ROT/'+'NROT*.json')))
+    nfile=np.array(sorted(glob.glob(path["outdir"]+'ROT/'+'NROT*'+time+'*.json')))
+    i=np.where(trtfiles==trtfile)[0][0].astype(int)+1
+    ii=np.where(pfiles==pfile)[0][0].astype(int)+1
+    iii=np.where(nfiles==nfile)[0][0].astype(int)+1
+    if np.nanmin([i,ii,iii])<12:
+        trtfiles=trtfiles[:i]
+        pfiles=pfiles[:ii]
+        nfiles=nfiles[:iii]
+    else:
+        trtfiles=trtfiles[i-12:i]
+        pfiles=pfiles[i-12:ii]
+        nfiles=nfiles[i-12:iii]
+    # pfiles=glob.glob(path["outdir"]+'ROT/'+'PROT*'+day+'*.json')
+    # pfiles=sorted(pfiles)
+    # nfiles=glob.glob(path["outdir"]+'ROT/'+'NROT*'+day+'*.json')
+    # nfiles=sorted(nfiles)
     
     #%%initialize empty dataframes to append
     trtcells=pd.DataFrame()
@@ -84,8 +101,8 @@ def main():
         vert_p=pd.concat((vert_p,gpd.GeoDataFrame.from_features(gj['features'])),axis=0)#vert_p.append(gpd.GeoDataFrame.from_features(gj['features']))
     print(vert_p); print(vert_n); print(trtcells)
     #%% generate plot
-    imtitle='Detected mesocyclones on VIL background';savepath=path["outdir"]+'IM/'; imname='DAYROT'+str(day)+'.png'
-    plot.plot_cart_day(trtcells,vert_p,vert_n, imtitle, savepath, imname, radar)
+    imtitle='Detected mesocyclones on VIL background';savepath=path["outdir"]+'IM/';imname='ROThist'+str(time+'.png')
+    plot.plot_cart_hist(time,trtcells,vert_p,vert_n, imtitle, savepath, imname, radar)
 
 #%% CALL MAIN FUNCTION
 
