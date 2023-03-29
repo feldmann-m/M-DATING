@@ -116,7 +116,7 @@ def main():
         #background=newcells*czc
         import copy
         background=copy.deepcopy(czc)
-        background[background<35]=np.nan
+        background[background<0]=np.nan
       except:
         b_file=glob.glob(path["lomdata"]+'CZC/*'+str(time)+'*')[0]
         print('Problem with file',b_file)

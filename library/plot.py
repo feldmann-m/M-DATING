@@ -197,7 +197,7 @@ def plot_cart_hist(time,background,trtcells,vert_p,vert_n, imtitle, savepath, im
 
     cmap, norm = from_levels_and_colors(bounds,colors,extend='max')
     
-    p0=plt.imshow(background, origin='lower', vmin=35, vmax=65, cmap=cmap)
+    p0=plt.imshow(background, origin='lower', vmin=0, vmax=65, cmap=cmap)
     p1=plt.scatter((np.array(radar["x"])- o_x)/1000,(np.array(radar["y"])- o_y)/1000,s=5,c='black',marker=".")
     idds=pd.concat([vert_p,vert_n])
     ids=np.unique(idds.ID[idds.time==time]).astype(int)
