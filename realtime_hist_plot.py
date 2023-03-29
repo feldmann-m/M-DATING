@@ -129,7 +129,7 @@ def main():
       background=np.zeros([640,710])
       background[:]=np.nan
     #%% generate plot
-    imtitle='Detected mesocyclones on VIL background';savepath=path["outdir"]+'IM/';imname='ROThist'+str(time+'.png')
+    imtitle='Detected mesocyclones on VIL background';savepath=path["outdir"]+'IM/';imname='ROT'+str(time+'.png')
     plot.plot_cart_hist(time,background,trtcells,vert_p,vert_n, imtitle, savepath, imname, radar)
 
 #%% CALL MAIN FUNCTION

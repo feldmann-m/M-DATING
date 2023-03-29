@@ -11,6 +11,7 @@ import numpy as np
 import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
+from matplotlib.colors import from_levels_and_colors
 #import nmmn.plots
 import shapefile
 import pandas as pd
@@ -112,9 +113,22 @@ def plot_cart_obj(background, xp, yp, sp, fp, xn, yn, sn, fn, cp, cn, imtitle, s
     xn = (xn - o_x)/1000
     yp = (yp - o_y)/1000
     yn = (yn - o_y)/1000
-    cmap=plt.cm.turbo
+    
+    bounds = [0.00, 0.01, 0.16, 0.25, 0.40,
+              0.63, 1.00, 1.60, 2.50, 4.00,
+              6.30, 10.00, 16.00, 25.00, 40.00,
+              63.00, 100.]  
+
+    colors = ['#FFFFFF', '#C0C0C0', '#660066', '#CC00CC', '#FF33FF',
+              '#001190', '#001CF2', '#066000', '#1AA90F', '#11FF00',
+              '#ABFF00', '#D1FF00', '#FFFF00', '#FFC000', '#FFA200',
+              '#FF8000', '#FF0000']
+
+    cmap, norm = from_levels_and_colors(bounds,colors,extend='max')
+    
+    #cmap=plt.cm.turbo
     #cmap.set_under(color='gray')
-    p0=plt.imshow(background, origin='lower', vmin=0, vmax=65, cmap=cmap)
+    p0=plt.imshow(background, origin='lower', vmin=0, vmax=101, cmap=cmap)
     # ax = plt.axes([0,0,1,1])
     # plt.colorbar(p0, cmap=cmap, extend='both', orientation='vertical',shrink=0.7, boundaries=[0,1,2,5,10,15,25,40,60,100,150,250], ticks=[0,1,2,5,10,15,25,40,60,100,150,250])
     p1=plt.scatter((np.array(radar["x"])- o_x)/1000,(np.array(radar["y"])- o_y)/1000,s=5,c='black',marker=".")
@@ -165,7 +179,24 @@ def plot_cart_hist(time,background,trtcells,vert_p,vert_n, imtitle, savepath, im
     o_y=-159000
     # background=np.zeros([640,710]); background[:]=np.nan
     fig=plt.figure(figsize=(6.4,7.1),frameon=False)#figsize=(14,10)
-    cmap=plt.cm.turbo
+    # cmap=plt.cm.turbo
+    
+    bounds = [0.00, 0.01, 0.16, 0.25, 0.40,
+              0.63, 1.00, 1.60, 2.50, 4.00,
+              6.30, 10.00, 16.00, 25.00, 40.00,
+              63.00, 100.]
+    bounds = [0.00, 8, 13, 15, 19,
+              22, 25, 28, 31, 34,
+              37, 40, 43, 46, 49,
+              52, 55]
+
+    colors = ['#FFFFFF', '#C0C0C0', '#660066', '#CC00CC', '#FF33FF',
+              '#001190', '#001CF2', '#066000', '#1AA90F', '#11FF00',
+              '#ABFF00', '#D1FF00', '#FFFF00', '#FFC000', '#FFA200',
+              '#FF8000', '#FF0000']
+
+    cmap, norm = from_levels_and_colors(bounds,colors,extend='max')
+    
     p0=plt.imshow(background, origin='lower', vmin=35, vmax=65, cmap=cmap)
     p1=plt.scatter((np.array(radar["x"])- o_x)/1000,(np.array(radar["y"])- o_y)/1000,s=5,c='black',marker=".")
     idds=pd.concat([vert_p,vert_n])
@@ -186,12 +217,13 @@ def plot_cart_hist(time,background,trtcells,vert_p,vert_n, imtitle, savepath, im
         sp=np.nansum([pcell.A_n,pcell.D_n,pcell.L_n,pcell.P_n,pcell.W_n]);fp=pcell.flag;cp=pcell.rank_90
         sn=np.nansum([ncell.A_n,ncell.D_n,ncell.L_n,ncell.P_n,ncell.W_n]);fn=ncell.flag;cn=ncell.rank_90
         
-        p4 = plt.plot(xt,yt,color='blue',linewidth=1)
-        
         ap=np.ones(len(fp)); ap[fp==0]=0.8
         an=np.ones(len(fn)); an[fn==0]=0.8
-        ccp=np.round((cp.values+1)).astype(int); ccp[ccp>5]=5
-        ccn=np.round((cn.values+1)).astype(int); ccn[ccn>5]=5
+        ccp=np.round((cp.values+1)*fp.values).astype(int); ccp[ccp>5]=5
+        ccn=np.round((cn.values+1)*fn.values).astype(int); ccn[ccn>5]=5
+        
+        p4 = plt.plot(xt,yt,color='blue',linewidth=1)
+        
         color=np.array(['grey','white','green','darkorange','firebrick','purple'])
         if len(xp)>0:
           p2=plt.scatter(xp,yp,s=30,c=color[ccp], vmin=0, vmax=5, marker="^",edgecolors='aqua',linewidth=0.5)#,alpha=0.8)
