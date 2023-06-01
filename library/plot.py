@@ -219,8 +219,10 @@ def plot_cart_hist(time,background,trtcells,vert_p,vert_n, imtitle, savepath, im
         
         ap=np.ones(len(fp)); ap[fp==0]=0.8
         an=np.ones(len(fn)); an[fn==0]=0.8
-        ccp=np.round((cp.values+1)*fp.values).astype(int); ccp[ccp>5]=5
-        ccn=np.round((cn.values+1)*fn.values).astype(int); ccn[ccn>5]=5
+        dp= np.nansum(pcell.dist)>0; dn= np.nansum(ncell.dist)>0
+        fp= int((len(xp)>3) * dp); fn= int((len(xn)>3) * dn)
+        ccp=np.round((cp.values+1)*fp).astype(int); ccp[ccp>5]=5
+        ccn=np.round((cn.values+1)*fn).astype(int); ccn[ccn>5]=5
         
         p4 = plt.plot(xt,yt,color='blue',linewidth=1)
         
@@ -273,7 +275,16 @@ def plot_cart_day(trtcells,vert_p,vert_n, imtitle, savepath, imname, radar):
         tcell=trtcells[trtcells.traj_ID.astype(int)==t_id]
         pcell=vert_p[vert_p.ID.astype(int)==t_id]
         ncell=vert_n[vert_n.ID.astype(int)==t_id]
-        if np.nansum(pcell.flag)+np.nansum(ncell.flag)==0: continue
+        
+        sp=np.nansum([pcell.A_n,pcell.D_n,pcell.L_n,pcell.P_n,pcell.W_n]);fp=pcell.flag;cp=pcell.rank_90
+        sn=np.nansum([ncell.A_n,ncell.D_n,ncell.L_n,ncell.P_n,ncell.W_n]);fn=ncell.flag;cn=ncell.rank_90
+        
+        dp= np.nansum(pcell.dist)>0; dn= np.nansum(ncell.dist)>0
+        fp= int((len(pcell)>3) * dp); fn= int((len(ncell)>3) * dn)
+        ccp=np.round((cp.values+1)*fp).astype(int); ccp[ccp>5]=5
+        ccn=np.round((cn.values+1)*fn).astype(int); ccn[ccn>5]=5
+        
+        if fp+fn==0: continue
         xp = (pcell.x.astype(float) - o_x)/1000
         xn = (ncell.x.astype(float) - o_x)/1000
         xt = (tcell.chx.astype(float) - o_x)/1000
@@ -282,13 +293,14 @@ def plot_cart_day(trtcells,vert_p,vert_n, imtitle, savepath, imname, radar):
         yt = (tcell.chy.astype(float) - o_y)/1000
         print('rot')
 
-        sp=np.nansum([pcell.A_n,pcell.D_n,pcell.L_n,pcell.P_n,pcell.W_n]);fp=pcell.flag;cp=pcell.rank_90
-        sn=np.nansum([ncell.A_n,ncell.D_n,ncell.L_n,ncell.P_n,ncell.W_n]);fn=ncell.flag;cn=ncell.rank_90
+
         
         p4 = plt.plot(xt,yt,color='blue',linewidth=1)
         
-        ap=np.ones(len(fp)); ap[fp==0]=0.8
-        an=np.ones(len(fn)); an[fn==0]=0.8
+        #ap=np.ones(len(fp)); ap[fp==0]=0.8
+        #an=np.ones(len(fn)); an[fn==0]=0.8
+        
+        
         ccp=np.round((cp.values+1)).astype(int); ccp[ccp>5]=5
         ccn=np.round((cn.values+1)).astype(int); ccn[ccn>5]=5
         color=np.array(['grey','white','green','darkorange','firebrick','purple'])
