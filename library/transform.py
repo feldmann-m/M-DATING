@@ -488,3 +488,31 @@ def c_transform(lon,lat):
     for n in range(len(lon)):
         chx[n],chy[n],z=converter.WGS84toLV03(lat[n], lon[n], 0)
     return chx,chy
+    
+def transform_c(chx,chy):
+    """
+    transforms arrays of chx/chy to lat/lon
+    
+    Parameters
+    -------
+    chx : float
+        chx in m.
+    chy : float
+        chy in m.
+        
+    Returns
+    ----------
+    lon : float
+        longitude.
+    lat : float
+        latitude.
+
+
+
+    """
+    converter = GPSConverter()
+    lon=np.zeros([len(chx)])
+    lat=np.zeros([len(chy)])
+    for n in range(len(lon)):
+        lat[n], lon[n],z=converter.LV03toWGS84(chx[n],chy[n], 0)
+    return lon,lat

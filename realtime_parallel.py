@@ -226,6 +226,7 @@ def radel_processor (rel, radar, cartesian, path, specs, files, shear, resolutio
         # process each thunderstorm individually
         cellvar=l_mask, az_shear, mfd_conv, rotation_pos, rotation_neg, distance, resolution, shear, radar, coord, timelist, r, el
         for ii in ids:
+
             rotation_pos, rotation_neg = meso.cell_loop(ii, cellvar)
 
     #return results from parallel processing

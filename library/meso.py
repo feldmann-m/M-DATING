@@ -176,7 +176,8 @@ def shear_group(rotation, sign, myfinaldata, az_shear, labels, resolution, dista
     #sheargroups=np.zeros(myfinaldata.shape); sheargroups[:]=np.nan
     #sheargroups[shear_groups>0]=1
     ##Collect all 2D patches
-    shear_prop=pd.DataFrame(data=shear_prop, columns=["ID", "time", "elevation", "radar", "indices", "x", "y", "z", "dvel", "vort", "diam", "rank", "v_ID", "size", "vol", "range"])
+    shear_prop=pd.DataFrame(data=shear_prop, columns=["ID",  "time", "elevation", "radar", "indices", "x", "y", "z", "dvel", "vort", "diam", "rank", "v_ID", "size", "vol", "range"])
+    #"trtlat", "trtlon",
     print(shear_prop)
     print("Identified shear areas: ", len(shear_prop))
 
@@ -207,6 +208,8 @@ def tower(rotation, areas, radar, shear, r, time, path):
         obj=prop.where(prop["v_ID"]==ID).dropna()
         if len(obj)<1: continue
         towers["ID"][ID]=ID
+        #towers["trtlat"][ID]=obj["trtlat"].values
+        #towers["trtlon"][ID]=obj["trtlon"].values
         towers["radar"][ID]=np.unique(obj["radar"].values)
         r_range=[]
         r_elev=[]
@@ -473,7 +476,7 @@ def cell_loop(ii, cellvar):
         rotation_pos=shear_group(rotation_pos, 1, 
                                                     mfd_conv_m, 
                                                     az_shear_m, 
-                                                    ii, 
+                                                    ii,
                                                     resolution, 
                                                     distance, 
                                                     shear, radar,
@@ -484,7 +487,7 @@ def cell_loop(ii, cellvar):
         rotation_neg=shear_group(rotation_neg, -1, 
                                                     mfd_conv_m, 
                                                     az_shear_m, 
-                                                    ii, 
+                                                    ii,
                                                     resolution, 
                                                     distance, 
                                                     shear, radar,

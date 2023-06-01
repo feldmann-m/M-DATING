@@ -724,7 +724,9 @@ def df_to_geojson(df, properties, lat='x', lon='y'):
                                'coordinates':[]}}
 
         # fill in the coordinates
-        feature['geometry']['coordinates'] = [row[lon],row[lat]]
+        llon, llat = transform.transform_c([row[lat]],[row[lon]])
+        print(llon, llat)
+        feature['geometry']['coordinates'] = [llon[0], llat[0]]
 
         # for each column, get the value and add it as a new feature property
         for prop in properties:
