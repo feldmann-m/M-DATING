@@ -137,12 +137,14 @@ def main():
     t_toc=timeit.default_timer()
     print("Computation time timestep: [s] ",t_toc-t_tic)
     # Read file with Mesocyclone history
-    phist,nhist=io.read_histfile(path)
+    #phist,nhist=io.read_histfile(path)
     # Time continuity and range check for new history file
-    phist,vert_p=meso.rot_hist(vert_p, phist,time)
-    nhist,vert_n=meso.rot_hist(vert_n, nhist,time)
+    #phist,vert_p=meso.rot_hist(vert_p, phist,time)
+    #nhist,vert_n=meso.rot_hist(vert_n, nhist,time)
+    vert_p=meso.rot_dist(vert_p)
+    vert_n=meso.rot_dist(vert_n)
     # Overwrite history file
-    io.write_histfile(phist,nhist,path)
+    #io.write_histfile(phist,nhist,path)
     # Write mesocyclone products
     pfile=path["outdir"]+'ROT/'+'PROT'+str(time)+'.json'
     io.write_geojson(vert_p,pfile)

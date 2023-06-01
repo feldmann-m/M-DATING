@@ -373,6 +373,34 @@ def summarise_rot(tower_list, ID_list):
         else: rotation=pd.concat((rotation,rot_track),axis=1)#rotation.append(rot_track)
     return rotation
 
+def rot_dist(tower_list):
+    """
+    Check mesocyclone for sufficient distance from radars
+
+    Parameters
+    ----------
+    tower_list : list of dataframes
+        list of rotation dataframes.
+
+    Returns
+    -------
+
+    tower_list : list of dataframes
+        list of rotation dataframes with continuity flags.
+
+    """
+    IDs=np.unique(tower_list.ID)
+    fill=np.zeros(len(tower_list)); fill[:]=-1
+    tower_list["cont"]=fill
+    tower_list["dist"]=fill
+    tower_list["flag"]=fill
+    #Add flag information to dataframes
+    for n in range(len(IDs)):
+        t=tower_list.iloc[n]
+        dist=np.nanmax([t.A_range,t.D_range,t.L_range,t.P_range,t.W_range])
+        if dist >= 20: tower_list.dist.iat[n]=1
+    return tower_list
+
 def rot_hist(tower_list, hist,time):
     """
     Check mesocyclone history for time continuity
