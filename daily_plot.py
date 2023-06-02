@@ -89,7 +89,7 @@ def main():
     print(vert_p); print(vert_n); print(trtcells)
     #%% generate plot
     imtitle='Detected mesocyclones on VIL background';savepath=path["outdir"]+'IM/'; imname='DAYROT'+str(day)+'.png'
-    savepath='/scratch/lom/mof/realtime/IM/'
+    
     plot.plot_cart_day(trtcells,vert_p,vert_n, imtitle, savepath, imname, radar)
 
 #%% CALL MAIN FUNCTION
