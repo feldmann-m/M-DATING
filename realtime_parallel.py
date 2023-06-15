@@ -78,20 +78,17 @@ def main():
       r_tic=timeit.default_timer()
       
       rotation_pos=variables.meso(); rotation_neg=variables.meso()
-      # Make unique radar-elevation IDs
-      els=np.arange(1,21)
-      rads=np.arange(100,501,100)
-#      rel=[]
-#      for r in rads:
-#          for el in els:
-#              rel.append(r+el)
+
       
       # Prepare parallel processes
       if __name__ == '__main__':
           manager = multiprocessing.Manager()
           return_dict = manager.dict()
           jobs = []
-      
+          
+      # Make unique radar-elevation IDs
+      els=np.arange(1,21)
+      rads=np.arange(100,501,100)     
       for el1 in els:
           rels=[]
           masks=[]
@@ -100,15 +97,11 @@ def main():
              rr=int(rel_i/100)-1; ell=rel_i%100-1
              l_mask=meso.mask(newlabels,coord, radar, cartesian, rr, ell)
              masks.append(l_mask)
-             #Check if any thunderstorm in radar-elevation domain
+             #Check if any thunderstorm in radar-elevation domain, make list of elevations that need to be processed
              if np.nansum((l_mask>0).flatten())>6:
                 rels.append(rel_i)
-#          #Check if any thunderstorm in radar-elevation domain
-#          r=int(rel_i/100)-1; el=rel_i%100-1
-#          l_mask=meso.mask(newlabels,coord, radar, cartesian, r, el)
-#          
-#          if np.nansum((l_mask>0).flatten())>6:
-              #Call parallel process, block print statements in parallelized section
+
+          #Call parallel process per elevation, block print statements in parallelized section
           print('Launching process for elevation',ell+1)
           io.blockPrint()
           #print(masks)
@@ -243,14 +236,16 @@ def radel_processor (rotation_pos, rotation_neg, rels, radar, cartesian, path, s
           ids=np.unique(l_mask)
           ids=ids[ids>0]
           # process each thunderstorm individually
-          #cellvar=l_mask, az_shear, mfd_conv, rotation_pos, rotation_neg, distance, resolution, shear, radar, coord, timelist, r, el
           for ii in ids:
               rotation_pos1, rotation_neg1 = meso.cell_loop(ii, l_mask, az_shear, mfd_conv, rotation_pos1, rotation_neg1, distance, resolution, shear, radar, coord, timelist, r, el)
           nn+=1 
           rotation_pos["prop"]=pd.concat([rotation_pos["prop"],rotation_pos1["prop"]], ignore_index=True)
           rotation_neg["prop"]=pd.concat([rotation_neg["prop"],rotation_neg1["prop"]], ignore_index=True) 
-    #print(rotation_pos,rotation_neg)  
-    #return results from parallel processing
+          rotation_pos["shear_objects"].append(rotation_pos1["shear_objects"])
+          rotation_neg["shear_objects"].append(rotation_neg1["shear_objects"])
+          rotation_pos["shear_ID"].append(rotation_pos1["shear_ID"])
+          rotation_neg["shear_ID"].append(rotation_neg1["shear_ID"])
+
 
     return_dict[el]= rotation_pos, rotation_neg
   
