@@ -462,8 +462,8 @@ def TRT_to_grid(year, event, path):
         list of all valid timesteps.
 
     """
-    o_x=254000
-    o_y=-159000
+    o_x=255000
+    o_y=-156000
     lx=710; ly=640
     
     unzip_archive(path['archive']+event,path['temp'],event,year,'TRTC')
@@ -484,8 +484,8 @@ def TRT_to_grid(year, event, path):
                     tt=np.reshape(tt,[int(len(tt)/2),2])
                     tlat=tt[:,1].astype(float); tlon=tt[:,0].astype(float)
                     chx,chy=transform.c_transform(tlon,tlat)
-                    ix=np.round((chx-o_x)/1000).astype(int)
-                    iy=np.round((chy-o_y)/1000).astype(int)
+                    ix=np.round((chx-o_x)//1000).astype(int)
+                    iy=np.round((chy-o_y)//1000).astype(int)
                     rr, cc = polygon(iy, ix, cells.shape)
                     cells[rr,cc]=int(t[0].values);
             if np.nansum(cells.flatten())>0:cellist.append(cells); timelist.append(time)
