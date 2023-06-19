@@ -463,7 +463,7 @@ def TRT_to_grid(year, event, path):
 
     """
     o_x=255000
-    o_y=-156000
+    o_y=-160000
     lx=710; ly=640
     
     unzip_archive(path['archive']+event,path['temp'],event,year,'TRTC')
@@ -519,8 +519,8 @@ def read_TRT(path, file=0, ttime=0):
 
     """
     
-    o_x=254000
-    o_y=-159000
+    o_x=255000
+    o_y=-160000
     lx=710; ly=640
     cells=np.zeros([ly,lx])
     if file == 0:
@@ -547,8 +547,8 @@ def read_TRT(path, file=0, ttime=0):
               chx, chy = transform.c_transform(lon,lat)
               # trt_df.iloc[n]['chx']=chx.astype(str); trt_df.iloc[n]['chy']=chy.astype(str)
               #transform.c_transform(trt_df.iloc[n].lon.values,trt_df.iloc[n].lat.values)
-              ix=np.round((chx-o_x)/1000).astype(int)
-              iy=np.round((chy-o_y)/1000).astype(int)
+              ix=np.round((chx-o_x)//1000).astype(int)
+              iy=np.round((chy-o_y)//1000).astype(int)
               rr, cc = polygon(iy, ix, cells.shape)
               # print(lat,lon,chx,chy,ix,iy)
               cells[rr,cc]=int(trt_df.traj_ID.iloc[n]);
@@ -564,9 +564,9 @@ def read_TRT(path, file=0, ttime=0):
             trt_df.loc[n,'lon']=t[2].values.astype(float)
             trt_df.loc[n,'lat']=t[3].values.astype(float)
             chx,chy=transform.c_transform([trt_df.loc[n,'lon']],[trt_df.loc[n,'lat']])
-            ix=np.round((chx-o_x)/1000).astype(int)
+            ix=np.round((chx-o_x)//1000).astype(int)
             if ix>=710: ix=709
-            iy=np.round((chy-o_y)/1000).astype(int)
+            iy=np.round((chy-o_y)//1000).astype(int)
             if iy>=640: iy=639
             n2=27
             if int(ttime)>=221520631: n2=82
@@ -577,8 +577,8 @@ def read_TRT(path, file=0, ttime=0):
             lat=tt[:,1].astype(float); lon=tt[:,0].astype(float)
             # trt_df=trt_df.astype(str)
             chx,chy=transform.c_transform(lon,lat)
-            ix=np.round((chx-o_x)/1000).astype(int)
-            iy=np.round((chy-o_y)/1000).astype(int)
+            ix=np.round((chx-o_x)//1000).astype(int)
+            iy=np.round((chy-o_y)//1000).astype(int)
             rr, cc = polygon(iy, ix, cells.shape)
             cells[rr,cc]=int(t[0].values);
     # print(np.nanmax(cells))
@@ -607,8 +607,8 @@ def get_TRT(ttime, path):
         list of all valid timesteps.
 
     """
-    o_x=254000
-    o_y=-159000
+    o_x=255000
+    o_y=-160000
     lx=710; ly=640
     # cells=np.zeros([ly,lx])
     #cpath='/store/mch/msrad/radar/swiss/data/'+year+'/'+event
@@ -627,8 +627,8 @@ def get_TRT(ttime, path):
         tt=np.reshape(tt,[int(len(tt)/2),2])
         tlat=tt[:,1].astype(float); tlon=tt[:,0].astype(float)
         chx,chy=transform.c_transform(tlon,tlat)
-        ix=np.round((chx-o_x)/1000).astype(int)
-        iy=np.round((chy-o_y)/1000).astype(int)
+        ix=np.round((chx-o_x)//1000).astype(int)
+        iy=np.round((chy-o_y)//1000).astype(int)
         rr, cc = polygon(iy, ix, cells.shape)
         cells[rr,cc]=int(t[0].values);
     if np.nansum(cells.flatten())>0:cellist.append(cells); timelist.append(ttime)
