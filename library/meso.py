@@ -147,8 +147,8 @@ def shear_group(rotation, sign, myfinaldata, az_shear, labels, resolution, dista
             xmax,ymax,zmax=coord[:,lmax[0],lmax[1]]
             xmin,ymin,zmin=coord[:,lmin[0],lmin[1]]
             dis=np.array([])
-            for n in range(len(xmax)):
-                dx=xmin-xmax[n]; dy=ymin-ymax[n]
+            for n2 in range(len(xmax)):
+                dx=xmin-xmax[n2]; dy=ymin-ymax[n2]
                 dis=np.append(dis,np.sqrt(dx*dx + dy*dy),axis=0)
             mindis=np.nanmin(dis)
             vort=4*dvel/mindis
@@ -187,11 +187,12 @@ def shear_group(rotation, sign, myfinaldata, az_shear, labels, resolution, dista
     return rotation
 
 
-def tower(rotation, areas, radar, shear, r, time, path):
+def tower(rotation, areas, radar, shear, time, path):
     ##merging objects within same thunderstorm
     print("checking for vertical towers")
     ##If too few 2D patches, discard
     if len(rotation["prop"])<2:
+        print("too few 2D patches")
         towers=variables.rot_df()
         v_ID=0
         return towers, v_ID
@@ -257,7 +258,7 @@ def tower(rotation, areas, radar, shear, r, time, path):
         
         towers["dz"][ID]=max(obj["z"])-min(obj["z"])
         # If depth threshold not met, discard 3D object
-        if towers["dz"][ID]<dz_min: towers.loc[ID]=np.nan; continue
+        if towers["dz"][ID]<dz_min: towers.loc[ID]=np.nan; print('shear area too shallow', ID); continue
         
         # All criteria met, fill rotation-tower dataframe with percentiles of 2D patches
         towers["z_0"][ID]=np.nanmin(obj["z"])
@@ -472,7 +473,7 @@ def rot_hist(tower_list, hist,time):
     return hist2,tower_list
 
 
-def cell_loop(ii, cellvar):
+def cell_loop(ii, l_mask, az_shear, mfd_conv, rotation_pos, rotation_neg, distance, resolution, shear, radar, coord, timelist, r, el):
     """
     Launch rotation detection within thunderstorm cells
 
@@ -492,7 +493,7 @@ def cell_loop(ii, cellvar):
 
     """
     
-    l_mask, az_shear, mfd_conv, rotation_pos, rotation_neg, distance, resolution, shear, radar, coord, timelist, r, el= cellvar
+    #l_mask, az_shear, mfd_conv, rotation_pos, rotation_neg, distance, resolution, shear, radar, coord, timelist, r, el= cellvar
     t=0
     #mask data to desired thunderstorm cell
     binary=l_mask==ii
