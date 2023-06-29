@@ -270,44 +270,46 @@ def plot_cart_day(trtcells,vert_p,vert_n, imtitle, savepath, imname, radar):
     fig=plt.figure(figsize=(6.4,7.1),frameon=False)#figsize=(14,10)
     p0=plt.imshow(background, origin='lower')
     p1=plt.scatter((np.array(radar["x"])- o_x)/1000,(np.array(radar["y"])- o_y)/1000,s=5,c='black',marker=".")
-    ids=np.unique(trtcells.traj_ID).astype(int)
-    for t_id in ids:
-        tcell=trtcells[trtcells.traj_ID.astype(int)==t_id]
-        pcell=vert_p[vert_p.ID.astype(int)==t_id]
-        ncell=vert_n[vert_n.ID.astype(int)==t_id]
-        
-        sp=np.nansum([pcell.A_n,pcell.D_n,pcell.L_n,pcell.P_n,pcell.W_n]);fp=pcell.flag;cp=pcell.rank_90
-        sn=np.nansum([ncell.A_n,ncell.D_n,ncell.L_n,ncell.P_n,ncell.W_n]);fn=ncell.flag;cn=ncell.rank_90
-        
-        dp= np.nansum(pcell.dist)>0; dn= np.nansum(ncell.dist)>0
-        fp= int((len(pcell)>3) * dp); fn= int((len(ncell)>3) * dn)
-        ccp=np.round((cp.values+1)*fp).astype(int); ccp[ccp>5]=5
-        ccn=np.round((cn.values+1)*fn).astype(int); ccn[ccn>5]=5
-        
-        if fp+fn==0: continue
-        xp = (pcell.x.astype(float) - o_x)/1000
-        xn = (ncell.x.astype(float) - o_x)/1000
-        xt = (tcell.chx.astype(float) - o_x)/1000
-        yp = (pcell.y.astype(float) - o_y)/1000
-        yn = (ncell.y.astype(float) - o_y)/1000
-        yt = (tcell.chy.astype(float) - o_y)/1000
-        print('rot')
-
-
-        
-        p4 = plt.plot(xt,yt,color='blue',linewidth=1)
-        
-        #ap=np.ones(len(fp)); ap[fp==0]=0.8
-        #an=np.ones(len(fn)); an[fn==0]=0.8
-        
-        
-        ccp=np.round((cp.values+1)).astype(int); ccp[ccp>5]=5
-        ccn=np.round((cn.values+1)).astype(int); ccn[ccn>5]=5
-        color=np.array(['grey','white','green','darkorange','firebrick','purple'])
-        if len(xp)>0:
-          p2=plt.scatter(xp,yp,s=30,c=color[ccp], vmin=0, vmax=5, marker="^",edgecolors='aqua',linewidth=0.5)#,alpha=0.8)
-        if len(xn)>0:
-          p3=plt.scatter(xn,yn,s=30,c=color[ccn], vmin=0, vmax=5, marker="v",edgecolors='red',linewidth=0.5)#,alpha=0.5)
+    print(len(trtcells))
+    if len(trtcells)>0:
+      ids=np.unique(trtcells.traj_ID).astype(int)
+      for t_id in ids:
+          tcell=trtcells[trtcells.traj_ID.astype(int)==t_id]
+          pcell=vert_p[vert_p.ID.astype(int)==t_id]
+          ncell=vert_n[vert_n.ID.astype(int)==t_id]
+          
+          sp=np.nansum([pcell.A_n,pcell.D_n,pcell.L_n,pcell.P_n,pcell.W_n]);fp=pcell.flag;cp=pcell.rank_90
+          sn=np.nansum([ncell.A_n,ncell.D_n,ncell.L_n,ncell.P_n,ncell.W_n]);fn=ncell.flag;cn=ncell.rank_90
+          
+          dp= np.nansum(pcell.dist)>0; dn= np.nansum(ncell.dist)>0
+          fp= int((len(pcell)>3) * dp); fn= int((len(ncell)>3) * dn)
+          ccp=np.round((cp.values+1)*fp).astype(int); ccp[ccp>5]=5
+          ccn=np.round((cn.values+1)*fn).astype(int); ccn[ccn>5]=5
+          
+          if fp+fn==0: continue
+          xp = (pcell.x.astype(float) - o_x)/1000
+          xn = (ncell.x.astype(float) - o_x)/1000
+          xt = (tcell.chx.astype(float) - o_x)/1000
+          yp = (pcell.y.astype(float) - o_y)/1000
+          yn = (ncell.y.astype(float) - o_y)/1000
+          yt = (tcell.chy.astype(float) - o_y)/1000
+          print('rot')
+  
+  
+          
+          p4 = plt.plot(xt,yt,color='blue',linewidth=1)
+          
+          #ap=np.ones(len(fp)); ap[fp==0]=0.8
+          #an=np.ones(len(fn)); an[fn==0]=0.8
+          
+          
+          ccp=np.round((cp.values+1)).astype(int); ccp[ccp>5]=5
+          ccn=np.round((cn.values+1)).astype(int); ccn[ccn>5]=5
+          color=np.array(['grey','white','green','darkorange','firebrick','purple'])
+          if len(xp)>0:
+            p2=plt.scatter(xp,yp,s=30,c=color[ccp], vmin=0, vmax=5, marker="^",edgecolors='aqua',linewidth=0.5)#,alpha=0.8)
+          if len(xn)>0:
+            p3=plt.scatter(xn,yn,s=30,c=color[ccn], vmin=0, vmax=5, marker="v",edgecolors='red',linewidth=0.5)#,alpha=0.5)
     plt.axis('off')
     plt.ylim(0, 640)
     plt.xlim(0, 710)
@@ -318,6 +320,7 @@ def plot_cart_day(trtcells,vert_p,vert_n, imtitle, savepath, imname, radar):
     # with open(namefig, 'wb') as outfile:
     #     fig.canvas.print_png(outfile)
     plt.savefig(namefig,transparent=True,bbox_inches='tight',dpi=300,pad_inches=0)
+    print('saving figure',namefig)
     plt.close()
 
 def plot_cart_scatter(myfinaldata, xp, yp, sp, xn, yn, sn, colorp, colorn, contours, imtitle, savepath, imname, radar):
