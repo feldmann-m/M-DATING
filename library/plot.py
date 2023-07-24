@@ -306,9 +306,9 @@ def plot_cart_day(trtcells,vert_p,vert_n, imtitle, savepath, imname, radar):
           ccp=np.round((cp.values+1)).astype(int); ccp[ccp>5]=5
           ccn=np.round((cn.values+1)).astype(int); ccn[ccn>5]=5
           color=np.array(['grey','white','green','darkorange','firebrick','purple'])
-          if len(xp)>0:
+          if len(xp)>2:
             p2=plt.scatter(xp,yp,s=30,c=color[ccp], vmin=0, vmax=5, marker="^",edgecolors='aqua',linewidth=0.5)#,alpha=0.8)
-          if len(xn)>0:
+          if len(xn)>2:
             p3=plt.scatter(xn,yn,s=30,c=color[ccn], vmin=0, vmax=5, marker="v",edgecolors='red',linewidth=0.5)#,alpha=0.5)
     plt.axis('off')
     plt.ylim(0, 640)
