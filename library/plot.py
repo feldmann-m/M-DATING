@@ -220,7 +220,7 @@ def plot_cart_hist(time,background,trtcells,vert_p,vert_n, imtitle, savepath, im
         ap=np.ones(len(fp)); ap[fp==0]=0.8
         an=np.ones(len(fn)); an[fn==0]=0.8
         dp= np.nansum(pcell.dist)>0; dn= np.nansum(ncell.dist)>0
-        fp= dp; fn=dn # int((len(xp)>3) * dp); fn= int((len(xn)>3) * dn)
+        fp= dp; fn=dn # int((len(xp)>3) * dp); fn= int((len(xn)>3) * dn) #only grey if too close to radar
         ccp=np.round((cp.values+1)*fp).astype(int); ccp[ccp>5]=5
         ccn=np.round((cn.values+1)*fn).astype(int); ccn[ccn>5]=5
         
@@ -231,7 +231,7 @@ def plot_cart_hist(time,background,trtcells,vert_p,vert_n, imtitle, savepath, im
           p2=plt.scatter(xp,yp,s=10,c=color[ccp], vmin=0, vmax=5, marker="^",edgecolors='aqua',linewidth=0.2)#,alpha=0.8)
         if len(xn)>0:
           p3=plt.scatter(xn,yn,s=10,c=color[ccn], vmin=0, vmax=5, marker="v",edgecolors='red',linewidth=0.2)#,alpha=0.5)
-          
+    # Selects rotation of current timestep and plots it larger      
     pcell=vert_p[vert_p.time.astype(int)==int(time)]
     ncell=vert_n[vert_n.time.astype(int)==int(time)]
     
