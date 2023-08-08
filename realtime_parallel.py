@@ -92,7 +92,7 @@ def main():
       rads=np.arange(100,501,100) # radar IDs (integers)      
       for el1 in els:
 
-          # List of radar-elevation IDs
+          # List of radar-elevation IDs containing thunderstorms
           rels=[]
           
           # List of trt cells in polar coordinates for each radar-elevation ID
@@ -108,6 +108,7 @@ def main():
              #Check if any thunderstorm in radar-elevation domain, make list of elevations that need to be processed
              if np.nansum((radar_elevation_trt_cells>0).flatten())>6:
                 rels.append(rel_i)
+
 
           #Call parallel process per elevation, block print statements in parallelized section
           print('Launching process for elevation',ell+1)
@@ -174,7 +175,7 @@ def radel_processor (rotation_pos, rotation_neg, rels, radar, cartesian, path, s
     TODO: argument list seems to be a bit outdated:
         - rotation_pos, rotation_neg arguments are needed?
         - cartesian, specs, files are unused
-        
+
     parallel processing of radars and elevations
 
     Parameters
@@ -220,9 +221,11 @@ def radel_processor (rotation_pos, rotation_neg, rels, radar, cartesian, path, s
     nn=0
     for rel in rels:
       print('Radar-elevation is', rel)
+
       # Regain radar and elevation numbers
       r=int(rel/100)-1
       el=rel%100-1
+      
       print("Analysing radar: ",r+1,", elevation: ",el+1)
       radar_elevation_trt_cells=masks[nn]
     
@@ -257,8 +260,7 @@ def radel_processor (rotation_pos, rotation_neg, rels, radar, cartesian, path, s
           rotation_pos["shear_ID"].append(rotation_pos1["shear_ID"])
           rotation_neg["shear_ID"].append(rotation_neg1["shear_ID"])
 
-
-    return_dict[el]= rotation_pos, rotation_neg
+      return_dict[el]= rotation_pos, rotation_neg
   
   
   
