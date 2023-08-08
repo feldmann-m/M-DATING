@@ -72,13 +72,13 @@ def main():
       # if any thunderstorm cells exist, continue algorithm
       newlabels=skim.dilation(trt_cells[0],footprint=np.ones([5,5]))
       
-      
+    
       print("starting rotation detection, analysing timestep: ", timelist[t])
       # ROTATION TRACKING
       r_tic=timeit.default_timer()
       
+      # Initialize positive and negative rotation dictionaries
       rotation_pos=variables.meso(); rotation_neg=variables.meso()
-
       
       # Prepare parallel processes
       if __name__ == '__main__':
@@ -87,14 +87,14 @@ def main():
           jobs = []
           
       # Make unique radar-elevation IDs
-      els=np.arange(1,21)
-      rads=np.arange(100,501,100)     
+      els=np.arange(1,21) # elevations
+      rads=np.arange(100,501,100) # radar IDs (integers)      
       for el1 in els:
           rels=[]
           masks=[]
           for r1 in rads:
-             rel_i=r1+el1
-             rr=int(rel_i/100)-1; ell=rel_i%100-1
+             rel_i=r1+el1 # radar-elevation ID (integer)
+             rr=int(rel_i/100)-1; ell=rel_i%100-1 # extract radar ID and elevation from radar-elevation ID
              l_mask=meso.mask(newlabels,coord, radar, cartesian, rr, ell)
              masks.append(l_mask)
              #Check if any thunderstorm in radar-elevation domain, make list of elevations that need to be processed
