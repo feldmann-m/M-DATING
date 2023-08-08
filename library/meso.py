@@ -21,12 +21,13 @@ import library.transform as transform
 #%%
 def mask(mask, coord, radar, cartesian, r, el):
     """
-    converts Cartesian thunderstorm mask to polar grid using lookup-table
+    Converts cartesian radar grid to to polar grid for given radar and elevation.
+    The conversion is done using lookup-tables
 
     Parameters
     ----------
     mask : 2D array
-        Cartesian grid of thunderstorm cells.
+        Cartesian grid.
     coord : list
         list of coordinate conversions (look-up-table).
     radar : dict
@@ -41,7 +42,7 @@ def mask(mask, coord, radar, cartesian, r, el):
     Returns
     -------
     p_mask : 2D array
-        polar conversion for the given radar and elevation of the thunderstorm array.
+        polar conversion for the given radar and elevation of input radar grid.
 
     """
     c_el=coord[el]

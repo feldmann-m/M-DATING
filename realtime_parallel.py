@@ -74,6 +74,7 @@ def main():
       dilated_trt_cell=skim.dilation(trt_cells[0],footprint=np.ones([5,5]))
       
       print("starting rotation detection, analysing timestep: ", timelist[t])
+
       # ROTATION TRACKING
       r_tic=timeit.default_timer()
       
@@ -96,7 +97,7 @@ def main():
              rel_i=r1+el1 # radar-elevation ID (integer)
              rr=int(rel_i/100)-1; ell=rel_i%100-1 # extract radar ID and elevation from radar-elevation ID
 
-             # Convert TRT cell grid to polar coordinates    
+             # Convert TRT cells grid to polar coordinates    
              l_mask=meso.mask(dilated_trt_cell,coord, radar, cartesian, rr, ell)
              masks.append(l_mask)
 
@@ -106,6 +107,7 @@ def main():
 
           #Call parallel process per elevation, block print statements in parallelized section
           print('Launching process for elevation',ell+1)
+
           io.blockPrint()
           #print(masks)
           p = multiprocessing.Process(target=radel_processor, args=(rotation_pos, rotation_neg, rels, radar, cartesian,
