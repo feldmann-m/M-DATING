@@ -63,6 +63,9 @@ def az_cd(myfinaldata, nyquist, threshold, resolution, min_size):
     ## azimuthal derivative, centered difference
     ## corrects for anomalous shear exceeding threshold
     ## shear only corrected if contiguous area of several pixels
+
+    # myfinaldata_1 and myfinaldata_2 are obtained from myfinaldata
+    # by rotating it by -1 and +1 degrees, respectively TODO: Is it correct?
     myfinaldata_1=np.zeros(myfinaldata.shape)
     myfinaldata_1[:-1,:]=myfinaldata[1:,:]
     myfinaldata_1[-1,:]=myfinaldata[0,:]
@@ -70,12 +73,13 @@ def az_cd(myfinaldata, nyquist, threshold, resolution, min_size):
     myfinaldata_2[1:,:]=myfinaldata[:-1,:]
     myfinaldata_2[0,:]=myfinaldata[-1,:]
     
+    # TODO: could we use here the function variables.distance?
     distance=np.arange(0.5*resolution, myfinaldata.shape[1]*resolution 
                        + 0.5*resolution, resolution)
     distance=npm.repmat(distance,myfinaldata.shape[0],1)
     distance=np.divide(np.multiply(distance,2*np.pi),360)
     
-    myshear_1=(myfinaldata-myfinaldata_1)/(2*distance)*-(1)
+    myshear_1=(myfinaldata-myfinaldata_1)/(2*distance)*(-1)
     myshear_2=(myfinaldata_2-myfinaldata)/(2*distance)*(-1)
     myshear_3=(myfinaldata_2-myfinaldata_1)/(2*distance)*(-1)
     

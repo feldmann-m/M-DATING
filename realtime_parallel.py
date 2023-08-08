@@ -243,9 +243,13 @@ def radel_processor (rotation_pos, rotation_neg, rels_with_thunderstorm, radar, 
           nyquist=radar["nyquist"][el]
           mfd_conv=transform.conv(dvdata)
           distance=variables.distance(dvdata, resolution)
+
+          # TODO: What is happening here?
           mfd_conv[:,40:]=dvdata[:,40:]
+
           az_shear = transform.az_cd(mfd_conv, nyquist, 0.8*nyquist, resolution, 2)[0]
-          # initialize rotation variables
+
+          # Initialize rotation variables
           rotation_pos=variables.meso(); rotation_neg=variables.meso()
           # get thunderstorm IDs
           ids=np.unique(radar_elevation_trt_cells)
