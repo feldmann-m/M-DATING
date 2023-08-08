@@ -69,10 +69,10 @@ def main():
     trt_df, trt_cells, timelist= io.read_TRT(path,0,time)
     t_tic=timeit.default_timer()
     if len(trt_df)>0:
+
       # if any thunderstorm cells exist, continue algorithm
-      newlabels=skim.dilation(trt_cells[0],footprint=np.ones([5,5]))
+      dilated_trt_cell=skim.dilation(trt_cells[0],footprint=np.ones([5,5]))
       
-    
       print("starting rotation detection, analysing timestep: ", timelist[t])
       # ROTATION TRACKING
       r_tic=timeit.default_timer()
@@ -95,8 +95,11 @@ def main():
           for r1 in rads:
              rel_i=r1+el1 # radar-elevation ID (integer)
              rr=int(rel_i/100)-1; ell=rel_i%100-1 # extract radar ID and elevation from radar-elevation ID
-             l_mask=meso.mask(newlabels,coord, radar, cartesian, rr, ell)
+
+             # Convert TRT cell grid to polar coordinates    
+             l_mask=meso.mask(dilated_trt_cell,coord, radar, cartesian, rr, ell)
              masks.append(l_mask)
+
              #Check if any thunderstorm in radar-elevation domain, make list of elevations that need to be processed
              if np.nansum((l_mask>0).flatten())>6:
                 rels.append(rel_i)
@@ -129,8 +132,8 @@ def main():
           
       # MERGE OBJECT DETECTION FROM ALL RADARS AND ELEVATIONS -> vertical continuity check
       print(rotation_pos["prop"],rotation_neg["prop"])
-      vert_p, v_ID_p = meso.tower(rotation_pos, newlabels, radar, shear, timelist[t], path)
-      vert_n, v_ID_n = meso.tower(rotation_neg, newlabels, radar, shear, timelist[t], path)
+      vert_p, v_ID_p = meso.tower(rotation_pos, dilated_trt_cell, radar, shear, timelist[t], path)
+      vert_n, v_ID_n = meso.tower(rotation_neg, dilated_trt_cell, radar, shear, timelist[t], path)
       
       r_toc=timeit.default_timer()
       print("time elapsed rotation detection [s]: ", r_toc-r_tic)
