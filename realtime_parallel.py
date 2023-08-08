@@ -91,11 +91,11 @@ def main():
       els=np.arange(1,21) # elevations
       rads=np.arange(100,501,100) # radar IDs (integers)      
       for el1 in els:
-          
-          # Initialize list of radar-elevation IDs
+
+          # List of radar-elevation IDs
           rels=[]
           
-          # Initialize list of trt cells in polar coordinates for each radar-elevation ID
+          # List of trt cells in polar coordinates for each radar-elevation ID
           masks=[] 
           for r1 in rads:
              rel_i=r1+el1 # radar-elevation ID (integer)
@@ -171,12 +171,14 @@ def main():
 def radel_processor (rotation_pos, rotation_neg, rels, radar, cartesian, path, specs, files, shear, resolution,
                     timelist, t, masks, coord, return_dict):
     """
+    TODO: argument list seems to be a bit outdated:
+        - rotation_pos, rotation_neg arguments are needed?
+        - cartesian, specs, files are unused
+        
     parallel processing of radars and elevations
 
     Parameters
     ----------
-#    rel : int
-#        unique radar-elevation number.
     rels : list of ints
         list of unique radar-elevation number per elevation.
     radar : dict
