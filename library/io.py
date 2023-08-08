@@ -513,7 +513,8 @@ def read_TRT(path, file=0, ttime=0):
     trt_df : dataframe
         TRT cells and attributes of the timestep.
     cells: list
-        Gridded TRT cells per timestep
+        Gridded TRT cells per timestep 
+        # TODO: is it correct that it is always a list of length 1? But then why is a list needed?
     timelist: list
         timesteps #TODO: is it possible to have more than 1 timestep? Then how would the "cells" list look like?
     """
