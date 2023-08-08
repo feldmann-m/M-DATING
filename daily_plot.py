@@ -15,7 +15,11 @@ parser.add_argument('--lomdir', type=str, required=False,default='/srn/data/')
 parser.add_argument('--outdir', type=str, required=False,default='/scratch/lom/mof/realtime/')
 parser.add_argument('--codedir', type=str, required=False,default='/scratch/lom/mof/code/ELDES_MESO/')
 parser.add_argument('--day', type=str, required=True)
+parser.add_argument('-v', action='store_true', default=False, help='verbose')
+
 args = parser.parse_args()
+verbose=args.v
+
 #%% import external libraries
 import sys
 sys.path.append(args.codedir)
@@ -48,6 +52,10 @@ def main():
     pfiles=sorted(pfiles)
     nfiles=glob.glob(path["outdir"]+'ROT/'+'NROT*'+day+'*.json')
     nfiles=sorted(nfiles)
+    if verbose: 
+      print("TRT  files; (",path["lomdata"]+'TRTC/*'+day+'*.json',"): ", len(trtfiles))
+      print("PROT files: (",path["outdir"]+'ROT/'+'PROT*'+day+'*.json',"): ", len(pfiles))
+      print("NROT files: (",path["outdir"]+'ROT/'+'NROT*'+day+'*.json',"): ", len(nfiles))
     
     #%%initialize empty dataframes to append
     trtcells=pd.DataFrame()
@@ -91,6 +99,8 @@ def main():
     imtitle='Detected mesocyclones on VIL background';savepath=path["outdir"]+'IM/'; imname='DAYROT'+str(day)+'.png'
     
     plot.plot_cart_day(trtcells,vert_p,vert_n, imtitle, savepath, imname, radar)
+    if verbose:
+      print("output file: %s%s" %(savepath,imname))
 
 #%% CALL MAIN FUNCTION
 
