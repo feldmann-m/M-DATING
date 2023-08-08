@@ -93,7 +93,7 @@ def main():
       for el1 in els:
 
           # List of radar-elevation IDs containing thunderstorms
-          rels=[]
+          rels_with_thunderstorm=[]
           
           # List of trt cells in polar coordinates for each radar-elevation ID
           masks=[] 
@@ -105,9 +105,9 @@ def main():
              radar_elevation_trt_cells=meso.mask(dilated_trt_cell,coord, radar, cartesian, rr, ell)
              masks.append(radar_elevation_trt_cells)
 
-             #Check if any thunderstorm in radar-elevation domain, make list of elevations that need to be processed
+             # Check if any thunderstorm in radar-elevation domain, make list of elevations that need to be processed
              if np.nansum((radar_elevation_trt_cells>0).flatten())>6:
-                rels.append(rel_i)
+                rels_with_thunderstorm.append(rel_i)
 
 
           #Call parallel process per elevation, block print statements in parallelized section
@@ -115,7 +115,7 @@ def main():
 
           io.blockPrint()
           #print(masks)
-          p = multiprocessing.Process(target=radel_processor, args=(rotation_pos, rotation_neg, rels, radar, cartesian,
+          p = multiprocessing.Process(target=radel_processor, args=(rotation_pos, rotation_neg, rels_with_thunderstorm, radar, cartesian,
                                         path, specs, files, shear, resolution, timelist,
                                         t, masks, coord[ell], return_dict))
           jobs.append(p)
@@ -169,7 +169,7 @@ def main():
 
 
 
-def radel_processor (rotation_pos, rotation_neg, rels, radar, cartesian, path, specs, files, shear, resolution,
+def radel_processor (rotation_pos, rotation_neg, rels_with_thunderstorm, radar, cartesian, path, specs, files, shear, resolution,
                     timelist, t, masks, coord, return_dict):
     """
     TODO: argument list seems to be a bit outdated:
@@ -180,8 +180,8 @@ def radel_processor (rotation_pos, rotation_neg, rels, radar, cartesian, path, s
 
     Parameters
     ----------
-    rels : list of ints
-        list of unique radar-elevation number per elevation.
+    rels_with_thunderstorm : list of ints
+        list of unique radar-elevation numbers where a thunderstorm is found
     radar : dict
         variable containing all radar information (see library.variables.py).
     cartesian : dict
@@ -219,7 +219,7 @@ def radel_processor (rotation_pos, rotation_neg, rels, radar, cartesian, path, s
     rotation_pos1=variables.meso()
     rotation_neg1=variables.meso()
     nn=0
-    for rel in rels:
+    for rel in rels_with_thunderstorm:
       print('Radar-elevation is', rel)
 
       # Regain radar and elevation numbers
