@@ -515,8 +515,7 @@ def read_TRT(path, file=0, ttime=0):
     cells: list
         Gridded TRT cells per timestep
     timelist: list
-        timesteps
-
+        timesteps #TODO: is it possible to have more than 1 timestep? Then how would the "cells" list look like?
     """
     
     o_x=255000
