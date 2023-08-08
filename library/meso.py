@@ -21,7 +21,7 @@ import library.transform as transform
 #%%
 def mask(mask, coord, radar, cartesian, r, el):
     """
-    Converts cartesian radar grid to to polar grid for given radar and elevation.
+    Converts cartesian radar grid to polar grid for given radar and elevation.
     The conversion is done using lookup-tables
 
     Parameters

@@ -97,12 +97,12 @@ def main():
              rel_i=r1+el1 # radar-elevation ID (integer)
              rr=int(rel_i/100)-1; ell=rel_i%100-1 # extract radar ID and elevation from radar-elevation ID
 
-             # Convert TRT cells grid to polar coordinates    
-             l_mask=meso.mask(dilated_trt_cell,coord, radar, cartesian, rr, ell)
-             masks.append(l_mask)
+             # Convert TRT cells grid to polar coordinates for given radar and elevation    
+             radar_elevation_trt_cells=meso.mask(dilated_trt_cell,coord, radar, cartesian, rr, ell)
+             masks.append(radar_elevation_trt_cells)
 
              #Check if any thunderstorm in radar-elevation domain, make list of elevations that need to be processed
-             if np.nansum((l_mask>0).flatten())>6:
+             if np.nansum((radar_elevation_trt_cells>0).flatten())>6:
                 rels.append(rel_i)
 
           #Call parallel process per elevation, block print statements in parallelized section
@@ -218,7 +218,7 @@ def radel_processor (rotation_pos, rotation_neg, rels, radar, cartesian, path, s
       r=int(rel/100)-1
       el=rel%100-1
       print("Analysing radar: ",r+1,", elevation: ",el+1)
-      l_mask=masks[nn]
+      radar_elevation_trt_cells=masks[nn]
     
       # Find and read velocity file
       dvfile=glob.glob(path["dvdata"]+'DV'+radar["radars"][r]+'/*'+timelist[t]+'*.8'+radar["elevations"][el])[0]
@@ -238,11 +238,11 @@ def radel_processor (rotation_pos, rotation_neg, rels, radar, cartesian, path, s
           # initialize rotation variables
           rotation_pos=variables.meso(); rotation_neg=variables.meso()
           # get thunderstorm IDs
-          ids=np.unique(l_mask)
+          ids=np.unique(radar_elevation_trt_cells)
           ids=ids[ids>0]
           # process each thunderstorm individually
           for ii in ids:
-              rotation_pos1, rotation_neg1 = meso.cell_loop(ii, l_mask, az_shear, mfd_conv, rotation_pos1, rotation_neg1, distance, resolution, shear, radar, coord, timelist, r, el)
+              rotation_pos1, rotation_neg1 = meso.cell_loop(ii, radar_elevation_trt_cells, az_shear, mfd_conv, rotation_pos1, rotation_neg1, distance, resolution, shear, radar, coord, timelist, r, el)
           nn+=1 
           rotation_pos["prop"]=pd.concat([rotation_pos["prop"],rotation_pos1["prop"]], ignore_index=True)
           rotation_neg["prop"]=pd.concat([rotation_neg["prop"],rotation_neg1["prop"]], ignore_index=True) 
