@@ -128,6 +128,20 @@ def rot_df():
     return df
 
 def distance(myfinaldata, resolution):
+    """ TODO: complete the docstring. What does the function precisely do?
+    Calculate distance
+
+    Parameters:
+    -----------
+    myfinaldata: np.array
+    resolution: float
+        radial resolution of radar polar product
+
+    Returns:
+    --------
+    distance: np.array
+    """
+
     distance=np.arange(0.5*resolution, myfinaldata.shape[1]*resolution 
                        + 0.5*resolution, resolution)
     distance=np.divide(np.multiply(distance,2*np.pi),360)
