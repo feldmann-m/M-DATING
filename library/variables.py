@@ -172,7 +172,6 @@ def read_mask(radar):
     TODO: Mabe add description of the mask3d files content? They have shape (3, 360, 492), and it may not be very clear
     what they precisely describe
     """
-    azimuths=np.arange(0,360,1)
     coord=[]
     for e in range(20):
         el=radar['angles'][e]
