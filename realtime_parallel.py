@@ -91,8 +91,12 @@ def main():
       els=np.arange(1,21) # elevations
       rads=np.arange(100,501,100) # radar IDs (integers)      
       for el1 in els:
+          
+          # Initialize list of radar-elevation IDs
           rels=[]
-          masks=[]
+          
+          # Initialize list of trt cells in polar coordinates for each radar-elevation ID
+          masks=[] 
           for r1 in rads:
              rel_i=r1+el1 # radar-elevation ID (integer)
              rr=int(rel_i/100)-1; ell=rel_i%100-1 # extract radar ID and elevation from radar-elevation ID
