@@ -218,7 +218,8 @@ def radel_processor (rotation_pos, rotation_neg, rels_with_thunderstorm, radar, 
     # Initialize rotation dictionaries
     rotation_pos1=variables.meso()
     rotation_neg1=variables.meso()
-    nn=0
+
+    nn=0 # Index for the radar-elevations ID's
     for rel in rels_with_thunderstorm:
       print('Radar-elevation is', rel)
 
@@ -229,12 +230,12 @@ def radel_processor (rotation_pos, rotation_neg, rels_with_thunderstorm, radar, 
       print("Analysing radar: ",r+1,", elevation: ",el+1)
       radar_elevation_trt_cells=masks[nn]
     
-      # Find and read velocity file
+      # Find and read velocity file corresponding to given radar and elevation
       dvfile=glob.glob(path["dvdata"]+'DV'+radar["radars"][r]+'/*'+timelist[t]+'*.8'+radar["elevations"][el])[0]
       print(dvfile)
       dvdata, flag1 = io.read_del_data(dvfile)
     
-      # exit if no velocity data
+      # Exit if no velocity data
       if flag1 == -1: 
           return variables.meso(), variables.meso();
       else:

@@ -293,7 +293,7 @@ def read_del_data(file):
     array or None
         data extracted by reader, None if failed.
     int
-        flag, whether data was successfully extracted.
+        flag: 1 if data was successfully extracted, else -1
 
     """
     print('Reading dealiased data: ', file)
