@@ -107,7 +107,7 @@ def meso():
     obj = {
             "shear_objects": [],
             "prop": pd.DataFrame(columns=["ID", "time", "elevation", "radar", "indices", "x", "y", "z", "dvel", "vort", "diam", "rank", "v_ID", "size", "vol", "range"]),
-            "shear_grid": np.zeros([360,512,20]),
+            "shear_grid": np.zeros([360,512,20]), # azimuth, range, elevation TODO: is it correct?
             "shear_ID": [],
             "pattern_vector": []
             }
