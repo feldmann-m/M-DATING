@@ -65,7 +65,7 @@ def az_cd(myfinaldata, nyquist, threshold, resolution, min_size):
     ## shear only corrected if contiguous area of several pixels
 
     # myfinaldata_1 and myfinaldata_2 are obtained from myfinaldata
-    # by shifting it by -1 and +1 degrees, respectively TODO: Is it correct?
+    # by shifting the grid by -1 and +1 degrees, respectively TODO: Is it correct?
     myfinaldata_1=np.zeros(myfinaldata.shape)
     myfinaldata_1[:-1,:]=myfinaldata[1:,:]
     myfinaldata_1[-1,:]=myfinaldata[0,:]
@@ -102,6 +102,7 @@ def az_cd(myfinaldata, nyquist, threshold, resolution, min_size):
     
     return myshear_cor, mygateshear_cor
 
+
 def shear_cor(myshear, distance, threshold, nyquist, min_size):
     """
     Identifies unfolding errors in derivative and corrects for them
@@ -131,6 +132,8 @@ def shear_cor(myshear, distance, threshold, nyquist, min_size):
     thresh_1=(myshear*(2*distance))-threshold
     thresh_2=(myshear*(2*distance))+threshold
     
+    # Identify groups exceeding the threshold,
+    # And subtract 2*nyquist whenever they reach the minimal size
     mybin_pos=np.zeros(myshear.shape)
     mybin_pos[thresh_1>=0]=1
     labels, n_groups=ndi.label(mybin_pos)
@@ -139,6 +142,8 @@ def shear_cor(myshear, distance, threshold, nyquist, min_size):
         if size<min_size: labels[labels==n]=0
         else: myshear_cor[labels==n] -= (2*nyquist)
     
+    # Identify groups subceeding the negative of the threshold,
+    # And add 2*nyquist whenever they reach the minimal size
     mybin_neg=np.zeros(myshear.shape)
     mybin_neg[thresh_2<=0]=1
     labels, n_groups=ndi.label(mybin_neg)
