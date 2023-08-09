@@ -500,6 +500,8 @@ def cell_loop(ii, l_mask, az_shear, mfd_conv, rotation_pos, rotation_neg, distan
     binary=l_mask==ii
     az_shear_m=az_shear*binary
     mfd_conv_m=mfd_conv*binary
+    
+    # TODO: what is the criterion here? Furthermore, why there is the need to flatten the array?
     if np.nanmax(abs(az_shear_m.flatten('C')))>=3:
         print("Identifying rotation shears")
         # rotation object detection for both signs

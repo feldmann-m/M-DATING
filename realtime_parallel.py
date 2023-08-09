@@ -215,7 +215,7 @@ def radel_processor (rotation_pos, rotation_neg, rels_with_thunderstorm, radar, 
         returns result of process, contains dicts of positive and negative rotation of radar.
 
     """
-    # Initialize rotation dictionaries
+    # Temporary rotation dictionaries that are updated within the loop
     rotation_pos1=variables.meso()
     rotation_neg1=variables.meso()
 
@@ -251,10 +251,12 @@ def radel_processor (rotation_pos, rotation_neg, rels_with_thunderstorm, radar, 
 
           # Initialize rotation variables
           rotation_pos=variables.meso(); rotation_neg=variables.meso()
-          # get thunderstorm IDs
+
+          # Get thunderstorm IDs
           ids=np.unique(radar_elevation_trt_cells)
           ids=ids[ids>0]
-          # process each thunderstorm individually
+          
+          # Process each thunderstorm individually
           for ii in ids:
               rotation_pos1, rotation_neg1 = meso.cell_loop(ii, radar_elevation_trt_cells, az_shear, mfd_conv, rotation_pos1, rotation_neg1, distance, resolution, shear, radar, coord, timelist, r, el)
           nn+=1 
