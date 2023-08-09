@@ -101,7 +101,7 @@ def neighbor_check(n,m,shearID,shear_groups,g_ID,ind):
     return shear_groups,ind
 
 
-def shear_group(rotation, sign, myfinaldata, az_shear, labels, resolution, distance, shear, radar, EL, el, R, r, coord, time):
+def shear_group(rotation, sign, myfinaldata, az_shear, cell_label, resolution, distance, shear, radar, EL, el, R, r, coord, time):
     ##Identification of 2D rotation patches
     min_width=shear["width"]
     az_shear=sign*az_shear
@@ -120,7 +120,7 @@ def shear_group(rotation, sign, myfinaldata, az_shear, labels, resolution, dista
         ##Establish range-dependent thresholds
         indices=np.where(shear_groups==n)
         if len(np.unique(indices[1]))>2:
-            vertical_ID=labels
+            vertical_ID=cell_label
             size=np.nansum(distance[indices]*resolution)
             vol=np.nansum(distance[indices]*resolution*resolution)
             cen_r=np.mean(indices[1])
