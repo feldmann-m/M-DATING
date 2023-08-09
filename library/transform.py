@@ -42,7 +42,7 @@ def az_cd(myfinaldata, nyquist, threshold, resolution, min_size):
     Parameters
     ----------
     myfinaldata : 2D array
-        input data.
+        input data. This is a 2D grid in polar coordinates with dimension (range, azimuth)
     nyquist : float
         Nyquist velocity of raw velocity data.
     threshold : float
@@ -65,7 +65,7 @@ def az_cd(myfinaldata, nyquist, threshold, resolution, min_size):
     ## shear only corrected if contiguous area of several pixels
 
     # myfinaldata_1 and myfinaldata_2 are obtained from myfinaldata
-    # by rotating it by -1 and +1 degrees, respectively TODO: Is it correct?
+    # by shifting it by -1 and +1 degrees, respectively TODO: Is it correct?
     myfinaldata_1=np.zeros(myfinaldata.shape)
     myfinaldata_1[:-1,:]=myfinaldata[1:,:]
     myfinaldata_1[-1,:]=myfinaldata[0,:]
@@ -79,16 +79,23 @@ def az_cd(myfinaldata, nyquist, threshold, resolution, min_size):
     distance=npm.repmat(distance,myfinaldata.shape[0],1)
     distance=np.divide(np.multiply(distance,2*np.pi),360)
     
+    # shear divided by 2; calculated between center + 1 degree and center
     myshear_1=(myfinaldata-myfinaldata_1)/(2*distance)*(-1)
+    
+    # shear divided by 2; calculated between center and center - 1 degree
     myshear_2=(myfinaldata_2-myfinaldata)/(2*distance)*(-1)
+    
+    # shear calculated between center + 1 degree and center - 1 degree.
+    # This is equal to myshear_1 + myshear_2
     myshear_3=(myfinaldata_2-myfinaldata_1)/(2*distance)*(-1)
     
+    # Correct unfolding errors for each shear
     myshear_1_cor=shear_cor(myshear_1, distance, threshold, nyquist, min_size)
-        
     myshear_2_cor=shear_cor(myshear_2, distance, threshold, nyquist, min_size)
-
     myshear_3_cor=shear_cor(myshear_3, distance, threshold, nyquist, min_size)
     
+    # Calculate final shear by summing myshear_1_cor and myshear_2_cor
+    # When the centered value is nan, calculate it instead using myshear_3_cor
     myshear_cor=np.nansum([myshear_2_cor,myshear_1_cor],axis=0)
     myshear_cor[np.isnan(myfinaldata)==1]=myshear_3_cor[np.isnan(myfinaldata)==1]
     mygateshear_cor=myshear_cor*distance
