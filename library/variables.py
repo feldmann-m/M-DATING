@@ -127,25 +127,29 @@ def rot_df():
                                 ])
     return df
 
-def distance(myfinaldata, resolution):
-    """ TODO: complete the docstring. What does the function precisely do?
-    Calculate distance
+def distance(polar_grid, radial_resolution):
+    """ TODO: Is the description correct?
+    Given a polar 2D array (range-azimuth), calculate the displacement of the center
+    of each pixel when the pixel in question is shifted by 1 degree in azimuthal direction.
 
     Parameters:
     -----------
-    myfinaldata: np.array
-    resolution: float
-        radial resolution of radar polar product
+    polar_grid: np.array
+        2D array with dimensions (range, azimuth)
+    radial_resolution: float
+        radial resolution of the polar grid
 
     Returns:
     --------
     distance: np.array
+        2D array of the same shape as 'polar_grid', describing the distance covered by each pixel after rotation
+        by 1 degree in azimuth
     """
 
-    distance=np.arange(0.5*resolution, myfinaldata.shape[1]*resolution 
-                       + 0.5*resolution, resolution)
+    distance=np.arange(0.5*radial_resolution, polar_grid.shape[1]*radial_resolution 
+                       + 0.5*radial_resolution, radial_resolution)
     distance=np.divide(np.multiply(distance,2*np.pi),360)
-    distance=npm.repmat(distance,myfinaldata.shape[0],1)
+    distance=npm.repmat(distance,polar_grid.shape[0],1)
     return distance
 
 def time(file):
