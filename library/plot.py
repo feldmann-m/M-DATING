@@ -323,7 +323,7 @@ def plot_cart_day(trtcells,vert_p,vert_n, imtitle, savepath, imname, radar):
   
   
           
-          p4 = plt.plot(xt,yt,color='black',linewidth=0.5)
+          #p4 = plt.plot(xt,yt,color='black',linewidth=0.5)
           
           #ap=np.ones(len(fp)); ap[fp==0]=0.8
           #an=np.ones(len(fn)); an[fn==0]=0.8
@@ -334,8 +334,10 @@ def plot_cart_day(trtcells,vert_p,vert_n, imtitle, savepath, imname, radar):
           color=np.array(['grey','aliceblue','green','darkorange','firebrick','purple'])
           if len(xp)>2:
             p2=plt.scatter(xp,yp,s=10,c=color[ccp], vmin=0, vmax=5, marker="^",edgecolors='aqua',linewidth=0.2)#,alpha=0.8)
+            p4 = plt.plot(xt,yt,color='black',linewidth=0.5)
           if len(xn)>2:
             p3=plt.scatter(xn,yn,s=10,c=color[ccn], vmin=0, vmax=5, marker="v",edgecolors='red',linewidth=0.2)#,alpha=0.5)
+            p4 = plt.plot(xt,yt,color='black',linewidth=0.5)
     plt.axis('off')
     plt.ylim(0, 640)
     plt.xlim(0, 710)
