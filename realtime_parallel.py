@@ -69,16 +69,17 @@ def main():
     trt_df, trt_cells, timelist= io.read_TRT(path,0,time)
     t_tic=timeit.default_timer()
     if len(trt_df)>0:
+
       # if any thunderstorm cells exist, continue algorithm
-      newlabels=skim.dilation(trt_cells[0],footprint=np.ones([5,5]))
-      
+      dilated_trt_cell=skim.dilation(trt_cells[0],footprint=np.ones([5,5]))
       
       print("starting rotation detection, analysing timestep: ", timelist[t])
+
       # ROTATION TRACKING
       r_tic=timeit.default_timer()
       
+      # Initialize positive and negative rotation dictionaries
       rotation_pos=variables.meso(); rotation_neg=variables.meso()
-
       
       # Prepare parallel processes
       if __name__ == '__main__':
@@ -87,25 +88,34 @@ def main():
           jobs = []
           
       # Make unique radar-elevation IDs
-      els=np.arange(1,21)
-      rads=np.arange(100,501,100)     
+      els=np.arange(1,21) # elevations
+      rads=np.arange(100,501,100) # radar IDs (integers)      
       for el1 in els:
-          rels=[]
-          masks=[]
+
+          # List of radar-elevation IDs containing thunderstorms
+          rels_with_thunderstorm=[]
+          
+          # List of trt cells in polar coordinates for each radar-elevation ID
+          masks=[] 
           for r1 in rads:
-             rel_i=r1+el1
-             rr=int(rel_i/100)-1; ell=rel_i%100-1
-             l_mask=meso.mask(newlabels,coord, radar, cartesian, rr, ell)
-             masks.append(l_mask)
-             #Check if any thunderstorm in radar-elevation domain, make list of elevations that need to be processed
-             if np.nansum((l_mask>0).flatten())>6:
-                rels.append(rel_i)
+             rel_i=r1+el1 # radar-elevation ID (integer)
+             rr=int(rel_i/100)-1; ell=rel_i%100-1 # extract radar ID and elevation from radar-elevation ID
+
+             # Convert TRT cells grid to polar coordinates for given radar and elevation    
+             radar_elevation_trt_cells=meso.mask(dilated_trt_cell,coord, radar, cartesian, rr, ell)
+             masks.append(radar_elevation_trt_cells)
+
+             # Check if any thunderstorm in radar-elevation domain, make list of elevations that need to be processed
+             if np.nansum((radar_elevation_trt_cells>0).flatten())>6:
+                rels_with_thunderstorm.append(rel_i)
+
 
           #Call parallel process per elevation, block print statements in parallelized section
           print('Launching process for elevation',ell+1)
+
           io.blockPrint()
           #print(masks)
-          p = multiprocessing.Process(target=radel_processor, args=(rotation_pos, rotation_neg, rels, radar, cartesian,
+          p = multiprocessing.Process(target=radel_processor, args=(rotation_pos, rotation_neg, rels_with_thunderstorm, radar, cartesian,
                                         path, specs, files, shear, resolution, timelist,
                                         t, masks, coord[ell], return_dict))
           jobs.append(p)
@@ -129,8 +139,8 @@ def main():
           
       # MERGE OBJECT DETECTION FROM ALL RADARS AND ELEVATIONS -> vertical continuity check
       print(rotation_pos["prop"],rotation_neg["prop"])
-      vert_p, v_ID_p = meso.tower(rotation_pos, newlabels, radar, shear, timelist[t], path)
-      vert_n, v_ID_n = meso.tower(rotation_neg, newlabels, radar, shear, timelist[t], path)
+      vert_p, v_ID_p = meso.tower(rotation_pos, dilated_trt_cell, radar, shear, timelist[t], path)
+      vert_n, v_ID_n = meso.tower(rotation_neg, dilated_trt_cell, radar, shear, timelist[t], path)
       
       r_toc=timeit.default_timer()
       print("time elapsed rotation detection [s]: ", r_toc-r_tic)
@@ -159,17 +169,19 @@ def main():
 
 
 
-def radel_processor (rotation_pos, rotation_neg, rels, radar, cartesian, path, specs, files, shear, resolution,
+def radel_processor (rotation_pos, rotation_neg, rels_with_thunderstorm, radar, cartesian, path, specs, files, shear, resolution,
                     timelist, t, masks, coord, return_dict):
     """
+    TODO: argument list seems to be a bit outdated:
+        - rotation_pos, rotation_neg arguments are needed?
+        - cartesian, specs, files are unused
+
     parallel processing of radars and elevations
 
     Parameters
     ----------
-#    rel : int
-#        unique radar-elevation number.
-    rels : list of ints
-        list of unique radar-elevation number per elevation.
+    rels_with_thunderstorm : list of ints
+        list of unique radar-elevation numbers where a thunderstorm is found
     radar : dict
         variable containing all radar information (see library.variables.py).
     cartesian : dict
@@ -203,24 +215,27 @@ def radel_processor (rotation_pos, rotation_neg, rels, radar, cartesian, path, s
         returns result of process, contains dicts of positive and negative rotation of radar.
 
     """
-    # Initialize rotation dictionaries
+    # Temporary rotation dictionaries that are updated within the loop
     rotation_pos1=variables.meso()
     rotation_neg1=variables.meso()
-    nn=0
-    for rel in rels:
+
+    nn=0 # Index for the radar-elevations ID's
+    for rel in rels_with_thunderstorm:
       print('Radar-elevation is', rel)
+
       # Regain radar and elevation numbers
       r=int(rel/100)-1
       el=rel%100-1
+      
       print("Analysing radar: ",r+1,", elevation: ",el+1)
-      l_mask=masks[nn]
+      radar_elevation_trt_cells=masks[nn]
     
-      # Find and read velocity file
+      # Find and read velocity file corresponding to given radar and elevation
       dvfile=glob.glob(path["dvdata"]+'DV'+radar["radars"][r]+'/*'+timelist[t]+'*.8'+radar["elevations"][el])[0]
       print(dvfile)
       dvdata, flag1 = io.read_del_data(dvfile)
     
-      # exit if no velocity data
+      # Exit if no velocity data
       if flag1 == -1: 
           return variables.meso(), variables.meso();
       else:
@@ -228,16 +243,22 @@ def radel_processor (rotation_pos, rotation_neg, rels, radar, cartesian, path, s
           nyquist=radar["nyquist"][el]
           mfd_conv=transform.conv(dvdata)
           distance=variables.distance(dvdata, resolution)
+
+          # TODO: What is happening here?
           mfd_conv[:,40:]=dvdata[:,40:]
+
           az_shear = transform.az_cd(mfd_conv, nyquist, 0.8*nyquist, resolution, 2)[0]
-          # initialize rotation variables
+
+          # Initialize rotation variables
           rotation_pos=variables.meso(); rotation_neg=variables.meso()
-          # get thunderstorm IDs
-          ids=np.unique(l_mask)
+
+          # Get thunderstorm IDs
+          ids=np.unique(radar_elevation_trt_cells)
           ids=ids[ids>0]
-          # process each thunderstorm individually
+          
+          # Process each thunderstorm individually
           for ii in ids:
-              rotation_pos1, rotation_neg1 = meso.cell_loop(ii, l_mask, az_shear, mfd_conv, rotation_pos1, rotation_neg1, distance, resolution, shear, radar, coord, timelist, r, el)
+              rotation_pos1, rotation_neg1 = meso.cell_loop(ii, radar_elevation_trt_cells, az_shear, mfd_conv, rotation_pos1, rotation_neg1, distance, resolution, shear, radar, coord, timelist, r, el)
           nn+=1 
           rotation_pos["prop"]=pd.concat([rotation_pos["prop"],rotation_pos1["prop"]], ignore_index=True)
           rotation_neg["prop"]=pd.concat([rotation_neg["prop"],rotation_neg1["prop"]], ignore_index=True) 
@@ -246,8 +267,7 @@ def radel_processor (rotation_pos, rotation_neg, rels, radar, cartesian, path, s
           rotation_pos["shear_ID"].append(rotation_pos1["shear_ID"])
           rotation_neg["shear_ID"].append(rotation_neg1["shear_ID"])
 
-
-    return_dict[el]= rotation_pos, rotation_neg
+      return_dict[el]= rotation_pos, rotation_neg
   
   
   

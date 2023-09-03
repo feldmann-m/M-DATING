@@ -21,12 +21,13 @@ import library.transform as transform
 #%%
 def mask(mask, coord, radar, cartesian, r, el):
     """
-    converts Cartesian thunderstorm mask to polar grid using lookup-table
+    Converts cartesian radar grid to polar grid for given radar and elevation.
+    The conversion is done using lookup-tables
 
     Parameters
     ----------
     mask : 2D array
-        Cartesian grid of thunderstorm cells.
+        Cartesian grid.
     coord : list
         list of coordinate conversions (look-up-table).
     radar : dict
@@ -41,7 +42,7 @@ def mask(mask, coord, radar, cartesian, r, el):
     Returns
     -------
     p_mask : 2D array
-        polar conversion for the given radar and elevation of the thunderstorm array.
+        polar conversion for the given radar and elevation of input radar grid.
 
     """
     c_el=coord[el]
@@ -100,7 +101,7 @@ def neighbor_check(n,m,shearID,shear_groups,g_ID,ind):
     return shear_groups,ind
 
 
-def shear_group(rotation, sign, myfinaldata, az_shear, labels, resolution, distance, shear, radar, EL, el, R, r, coord, time):
+def shear_group(rotation, sign, myfinaldata, az_shear, cell_label, resolution, distance, shear, radar, EL, el, R, r, coord, time):
     ##Identification of 2D rotation patches
     min_width=shear["width"]
     az_shear=sign*az_shear
@@ -119,7 +120,7 @@ def shear_group(rotation, sign, myfinaldata, az_shear, labels, resolution, dista
         ##Establish range-dependent thresholds
         indices=np.where(shear_groups==n)
         if len(np.unique(indices[1]))>2:
-            vertical_ID=labels
+            vertical_ID=cell_label
             size=np.nansum(distance[indices]*resolution)
             vol=np.nansum(distance[indices]*resolution*resolution)
             cen_r=np.mean(indices[1])
@@ -499,6 +500,8 @@ def cell_loop(ii, l_mask, az_shear, mfd_conv, rotation_pos, rotation_neg, distan
     binary=l_mask==ii
     az_shear_m=az_shear*binary
     mfd_conv_m=mfd_conv*binary
+    
+    # TODO: what is the criterion here? Furthermore, why there is the need to flatten the array?
     if np.nanmax(abs(az_shear_m.flatten('C')))>=3:
         print("Identifying rotation shears")
         # rotation object detection for both signs

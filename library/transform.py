@@ -42,7 +42,7 @@ def az_cd(myfinaldata, nyquist, threshold, resolution, min_size):
     Parameters
     ----------
     myfinaldata : 2D array
-        input data.
+        input data. This is a 2D grid in polar coordinates with dimension (range, azimuth)
     nyquist : float
         Nyquist velocity of raw velocity data.
     threshold : float
@@ -63,6 +63,9 @@ def az_cd(myfinaldata, nyquist, threshold, resolution, min_size):
     ## azimuthal derivative, centered difference
     ## corrects for anomalous shear exceeding threshold
     ## shear only corrected if contiguous area of several pixels
+
+    # myfinaldata_1 and myfinaldata_2 are obtained from myfinaldata
+    # by shifting the grid by -1 and +1 degrees, respectively TODO: Is it correct?
     myfinaldata_1=np.zeros(myfinaldata.shape)
     myfinaldata_1[:-1,:]=myfinaldata[1:,:]
     myfinaldata_1[-1,:]=myfinaldata[0,:]
@@ -70,26 +73,35 @@ def az_cd(myfinaldata, nyquist, threshold, resolution, min_size):
     myfinaldata_2[1:,:]=myfinaldata[:-1,:]
     myfinaldata_2[0,:]=myfinaldata[-1,:]
     
+    # TODO: could we use here the function variables.distance?
     distance=np.arange(0.5*resolution, myfinaldata.shape[1]*resolution 
                        + 0.5*resolution, resolution)
     distance=npm.repmat(distance,myfinaldata.shape[0],1)
     distance=np.divide(np.multiply(distance,2*np.pi),360)
     
-    myshear_1=(myfinaldata-myfinaldata_1)/(2*distance)*-(1)
+    # shear divided by 2; calculated between center + 1 degree and center
+    myshear_1=(myfinaldata-myfinaldata_1)/(2*distance)*(-1)
+    
+    # shear divided by 2; calculated between center and center - 1 degree
     myshear_2=(myfinaldata_2-myfinaldata)/(2*distance)*(-1)
+    
+    # shear calculated between center + 1 degree and center - 1 degree.
+    # This is equal to myshear_1 + myshear_2
     myshear_3=(myfinaldata_2-myfinaldata_1)/(2*distance)*(-1)
     
+    # Correct unfolding errors for each shear
     myshear_1_cor=shear_cor(myshear_1, distance, threshold, nyquist, min_size)
-        
     myshear_2_cor=shear_cor(myshear_2, distance, threshold, nyquist, min_size)
-
     myshear_3_cor=shear_cor(myshear_3, distance, threshold, nyquist, min_size)
     
+    # Calculate final shear by summing myshear_1_cor and myshear_2_cor
+    # When the centered value is nan, calculate it instead using myshear_3_cor
     myshear_cor=np.nansum([myshear_2_cor,myshear_1_cor],axis=0)
     myshear_cor[np.isnan(myfinaldata)==1]=myshear_3_cor[np.isnan(myfinaldata)==1]
     mygateshear_cor=myshear_cor*distance
     
     return myshear_cor, mygateshear_cor
+
 
 def shear_cor(myshear, distance, threshold, nyquist, min_size):
     """
@@ -120,6 +132,8 @@ def shear_cor(myshear, distance, threshold, nyquist, min_size):
     thresh_1=(myshear*(2*distance))-threshold
     thresh_2=(myshear*(2*distance))+threshold
     
+    # Identify groups exceeding the threshold,
+    # And subtract 2*nyquist whenever they reach the minimal size
     mybin_pos=np.zeros(myshear.shape)
     mybin_pos[thresh_1>=0]=1
     labels, n_groups=ndi.label(mybin_pos)
@@ -128,6 +142,8 @@ def shear_cor(myshear, distance, threshold, nyquist, min_size):
         if size<min_size: labels[labels==n]=0
         else: myshear_cor[labels==n] -= (2*nyquist)
     
+    # Identify groups subceeding the negative of the threshold,
+    # And add 2*nyquist whenever they reach the minimal size
     mybin_neg=np.zeros(myshear.shape)
     mybin_neg[thresh_2<=0]=1
     labels, n_groups=ndi.label(mybin_neg)

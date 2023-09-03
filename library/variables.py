@@ -107,7 +107,7 @@ def meso():
     obj = {
             "shear_objects": [],
             "prop": pd.DataFrame(columns=["ID", "time", "elevation", "radar", "indices", "x", "y", "z", "dvel", "vort", "diam", "rank", "v_ID", "size", "vol", "range"]),
-            "shear_grid": np.zeros([360,512,20]),
+            "shear_grid": np.zeros([360,512,20]), # azimuth, range, elevation TODO: is it correct?
             "shear_ID": [],
             "pattern_vector": []
             }
@@ -127,11 +127,29 @@ def rot_df():
                                 ])
     return df
 
-def distance(myfinaldata, resolution):
-    distance=np.arange(0.5*resolution, myfinaldata.shape[1]*resolution 
-                       + 0.5*resolution, resolution)
+def distance(polar_grid, radial_resolution):
+    """ TODO: Is the description correct?
+    Given a polar 2D array (range-azimuth), calculate the displacement of the center
+    of each pixel when the pixel in question is shifted by 1 degree in azimuthal direction.
+
+    Parameters:
+    -----------
+    polar_grid: np.array
+        2D array with dimensions (range, azimuth)
+    radial_resolution: float
+        radial resolution of the polar grid
+
+    Returns:
+    --------
+    distance: np.array
+        2D array of the same shape as 'polar_grid', describing the distance covered by each pixel after rotation
+        by 1 degree in azimuth
+    """
+
+    distance=np.arange(0.5*radial_resolution, polar_grid.shape[1]*radial_resolution 
+                       + 0.5*radial_resolution, radial_resolution)
     distance=np.divide(np.multiply(distance,2*np.pi),360)
-    distance=npm.repmat(distance,myfinaldata.shape[0],1)
+    distance=npm.repmat(distance,polar_grid.shape[0],1)
     return distance
 
 def time(file):
@@ -168,7 +186,10 @@ def mask_coord(radar):
     return coord
 
 def read_mask(radar):
-    azimuths=np.arange(0,360,1)
+    """
+    TODO: Mabe add description of the mask3d files content? They have shape (3, 360, 492), and it may not be very clear
+    what they precisely describe
+    """
     coord=[]
     for e in range(20):
         el=radar['angles'][e]
