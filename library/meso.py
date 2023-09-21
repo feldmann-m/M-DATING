@@ -69,9 +69,9 @@ def pattern_vectors(shear, min_shear_far, min_shear_near, min_length, distance):
     for m in range(0,shear.shape[1]):
         #print (m)
         for n in range(0,shear.shape[0]-2):
-            if n<=40: shear_thresh=min_shear_near
-            if n<200 and n>40: shear_thresh=min_shear_near-(min_shear_near-min_shear_far)*((n-40)/160)
-            if n>=200: shear_thresh=min_shear_far
+            if m<=40: shear_thresh=min_shear_near
+            if m<200 and m>40: shear_thresh=min_shear_near-(min_shear_near-min_shear_far)*((m-40)/160)
+            if m>=200: shear_thresh=min_shear_far
             # print(n, shear_thresh)
             if all(shear[n:n+3,m]>shear_thresh): shear_ID[n:n+3,m]=IDpos; # and all(myshear_cor[n:n+3,m]<3)
             elif all(shear[n-1:n+2,m]>shear_thresh) and shear[n+2,m]<=shear_thresh: IDpos+=1
