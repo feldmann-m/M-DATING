@@ -247,8 +247,10 @@ def llsd(vel, az_min, az_max, w_k, r_k, resolution):
                        + 0.5*resolution, resolution)
     distance=npm.repmat(distance,vel.shape[0],1)
     distance=np.divide(np.multiply(distance,2*np.pi),360)
-    
-    for n2 in range(1,vel.shape[1]-1):
+
+    r_h=int(np.floor(az_max/2))
+	
+    for n2 in range(r_h,vel.shape[1]-r_h):
         
         az_w=int(np.round(w_k/distance[1,n2]));
         if az_w%2 == 0: az_w+=1
@@ -264,16 +266,20 @@ def llsd(vel, az_min, az_max, w_k, r_k, resolution):
         r_vec=np.expand_dims(r_vec,axis=0)
         d_r=np.repeat(r_vec,az_w,axis=0)
         
-        d_r=np.zeros([az_w,r_w]); d_r[:,0]=0.5; d_r[:,1]=0; d_r[:,2]=-0.5
+        d_r=np.zeros([az_w,r_w])
+        for n2_2 in range(0,r_w):
+            d_r[:,n2_2]=-r_k*n2_2/(r_w-1)+r_k*0.5
+        rw_f=int(np.floor(r_w/2))
+	    
         d_r2=-copy.deepcopy(d_r); #print(d_r.shape,n2)
         weights=np.ones([az_w,r_w])
-        d_theta=copy.deepcopy(distance[:az_w,n2-1:n2+2]); d_theta[az_r,:]=0
+        d_theta=copy.deepcopy(distance[:az_w,n2-rw_f:n2+rw_f+1]); d_theta[az_r,:]=0
         d_theta[:az_r,:]=-d_theta[:az_r,:];
         d_thet=copy.deepcopy(d_theta); d_thet=-np.flip(d_thet,1)
 
-        u_k=convolve2d(vel[:,n2-1:n2+2],weights,mode='same',boundary='wrap')[:,1]
-        u_k_thet=convolve2d(vel[:,n2-1:n2+2],d_thet,mode='same',boundary='wrap')[:,1]
-        u_k_r=convolve2d(vel[:,n2-1:n2+2],d_r2,mode='same',boundary='wrap')[:,1]
+        u_k=convolve2d(vel[:,n2-rw_f:n2+rw_f+1],weights,mode='same',boundary='wrap')[:,1]
+        u_k_thet=convolve2d(vel[:,n2-rw_f:n2+rw_f+1],d_thet,mode='same',boundary='wrap')[:,1]
+        u_k_r=convolve2d(vel[:,n2-rw_f:n2+rw_f+1],d_r2,mode='same',boundary='wrap')[:,1]
 
         az_shear[:,n2]= az_llsd(d_r, d_theta, u_k_r, u_k_thet, u_k, weights)
         div_shear[:,n2]= div_llsd(d_r, d_theta, u_k_r, u_k_thet, u_k, weights)
