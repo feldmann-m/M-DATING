@@ -114,15 +114,30 @@ def plot_cart_obj(background, xp, yp, sp, fp, xn, yn, sn, fn, cp, cn, imtitle, s
     yp = (yp - o_y)/1000
     yn = (yn - o_y)/1000
     
-    bounds = [0.00, 0.01, 0.16, 0.25, 0.40,
-              0.63, 1.00, 1.60, 2.50, 4.00,
-              6.30, 10.00, 16.00, 25.00, 40.00,
-              63.00, 100.]  
+    bounds = list([4, 8] + np.linspace(13, 61, 17, dtype=int).tolist())  
 
-    colors = ['#FFFFFF', '#C0C0C0', '#660066', '#CC00CC', '#FF33FF',
-              '#001190', '#001CF2', '#066000', '#1AA90F', '#11FF00',
-              '#ABFF00', '#D1FF00', '#FFFF00', '#FFC000', '#FFA200',
-              '#FF8000', '#FF0000']
+    colors = [
+        "#d3ebff",
+        "#e9d7f3",
+        "#9d7f95",
+        "#650165",
+        "#af01af",
+        "#3333c9",
+        "#0165ff",
+        "#019797",
+        "#02c933",
+        "#65ff01",
+        "#97ff01",
+        "#c9ff33",
+        "#ffff01",
+        "#ffc901",
+        "#ffa101",
+        "#ff7d01",
+        "#e11901",
+        "#c10101",
+        "#9f0101",
+    ]
+
 
     cmap, norm = from_levels_and_colors(bounds,colors,extend='max')
     
@@ -185,15 +200,29 @@ def plot_cart_hist(time,background,trtcells,vert_p,vert_n, imtitle, savepath, im
               0.63, 1.00, 1.60, 2.50, 4.00,
               6.30, 10.00, 16.00, 25.00, 40.00,
               63.00, 100.]
-    bounds = [0.00, 8, 13, 15, 19,
-              22, 25, 28, 31, 34,
-              37, 40, 43, 46, 49,
-              52, 55]
+    bounds = list([4, 8] + np.linspace(13, 61, 17, dtype=int).tolist())  
 
-    colors = ['#FFFFFF', '#C0C0C0', '#660066', '#CC00CC', '#FF33FF',
-              '#001190', '#001CF2', '#066000', '#1AA90F', '#11FF00',
-              '#ABFF00', '#D1FF00', '#FFFF00', '#FFC000', '#FFA200',
-              '#FF8000', '#FF0000']
+    colors = [
+        "#d3ebff",
+        "#e9d7f3",
+        "#9d7f95",
+        "#650165",
+        "#af01af",
+        "#3333c9",
+        "#0165ff",
+        "#019797",
+        "#02c933",
+        "#65ff01",
+        "#97ff01",
+        "#c9ff33",
+        "#ffff01",
+        "#ffc901",
+        "#ffa101",
+        "#ff7d01",
+        "#e11901",
+        "#c10101",
+        "#9f0101",
+    ]
 
     cmap, norm = from_levels_and_colors(bounds,colors,extend='max')
     
