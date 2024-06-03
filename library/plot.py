@@ -139,11 +139,12 @@ def plot_cart_obj(background, xp, yp, sp, fp, xn, yn, sn, fn, cp, cn, imtitle, s
     ]
 
 
-    cmap, norm = from_levels_and_colors(bounds,colors,extend='max')
+    cmap, _ = from_levels_and_colors(bounds,colors,extend='max')
+    norm = mpl.colors.BoundaryNorm(bounds, ncolors=len(bounds) - 1)
     
     #cmap=plt.cm.turbo
     #cmap.set_under(color='gray')
-    p0=plt.imshow(background, origin='lower', vmin=0, vmax=101, cmap=cmap)
+    p0=plt.imshow(background, cmap=cmap, norm=norm)
     # ax = plt.axes([0,0,1,1])
     # plt.colorbar(p0, cmap=cmap, extend='both', orientation='vertical',shrink=0.7, boundaries=[0,1,2,5,10,15,25,40,60,100,150,250], ticks=[0,1,2,5,10,15,25,40,60,100,150,250])
     p1=plt.scatter((np.array(radar["x"])- o_x)/1000,(np.array(radar["y"])- o_y)/1000,s=5,c='black',marker=".")
@@ -224,9 +225,10 @@ def plot_cart_hist(time,background,trtcells,vert_p,vert_n, imtitle, savepath, im
         "#9f0101",
     ]
 
-    cmap, norm = from_levels_and_colors(bounds,colors,extend='max')
+    cmap, _ = from_levels_and_colors(bounds,colors,extend='max')
+    norm = mpl.colors.BoundaryNorm(bounds, ncolors=len(bounds) - 1)
     
-    p0=plt.imshow(background, origin='lower', vmin=0, vmax=65, cmap=cmap)
+    p0=plt.imshow(background, cmap=cmap, norm=norm)
     p1=plt.scatter((np.array(radar["x"])- o_x)/1000,(np.array(radar["y"])- o_y)/1000,s=5,c='black',marker=".")
     idds=pd.concat([vert_p,vert_n])
     ids=np.unique(idds.ID).astype(int)
