@@ -39,6 +39,10 @@ import library.variables as variables
 import library.plot as plot
 import library.io as io
 #%% Main function
+
+
+#CONFIG
+back_timesteps = 3
 def main():
     #import variables
     time=args.time
@@ -54,14 +58,14 @@ def main():
     i=np.where(trtfiles==trtfile)[0][0].astype(int)+1
     ii=np.where(pfiles==pfile)[0][0].astype(int)+1
     iii=np.where(nfiles==nfile)[0][0].astype(int)+1
-    if np.nanmin([i,ii,iii])<12:
+    if np.nanmin([i,ii,iii])<back_timesteps:
         trtfiles=trtfiles[:i]
         pfiles=pfiles[:ii]
         nfiles=nfiles[:iii]
     else:
-        trtfiles=trtfiles[i-12:i]
-        pfiles=pfiles[ii-12:ii]
-        nfiles=nfiles[iii-12:iii]
+        trtfiles=trtfiles[i-back_timesteps:i]
+        pfiles=pfiles[ii-back_timesteps:ii]
+        nfiles=nfiles[iii-back_timesteps:iii]
     # pfiles=glob.glob(path["outdir"]+'ROT/'+'PROT*'+day+'*.json')
     # pfiles=sorted(pfiles)
     # nfiles=glob.glob(path["outdir"]+'ROT/'+'NROT*'+day+'*.json')
