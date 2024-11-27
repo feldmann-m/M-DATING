@@ -246,8 +246,7 @@ def radel_processor (rotation_pos, rotation_neg, rels, radar, cartesian, path, s
           rotation_pos["shear_ID"].append(rotation_pos1["shear_ID"])
           rotation_neg["shear_ID"].append(rotation_neg1["shear_ID"])
 
-
-    return_dict[el]= rotation_pos, rotation_neg
+      return_dict[el]= rotation_pos, rotation_neg
   
   
   
