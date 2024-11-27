@@ -21,7 +21,6 @@ args = parser.parse_args()
 import sys
 sys.path.append(args.codedir)
 import os
-os.environ['METRANETLIB_PATH'] = '/srn/las/idl/lib/radlib/'
 import pandas as pd
 import skimage.morphology as skim
 pd.options.mode.chained_assignment = None
@@ -38,6 +37,10 @@ import pyart
 import library.variables as variables
 import library.plot as plot
 import library.io as io
+
+if not 'METRANETLIB_PATH' in os.environ:
+    os.environ['METRANETLIB_PATH'] = '/srn/las/idl/lib/radlib/'
+
 #%% Main function
 def main():
     #import variables
