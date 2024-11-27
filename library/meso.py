@@ -204,6 +204,14 @@ def tower(rotation, areas, radar, shear, time, path):
     print(n)
     headers=variables.rot_df().columns
     towers=pd.DataFrame(data=0.0, index=n, columns=headers)
+
+    # Set default value for radar range
+    towers['A_range'] = 999
+    towers['D_range'] = 999
+    towers['L_range'] = 999
+    towers['P_range'] = 999
+    towers['W_range'] = 999
+
     ## Build rotation tower per thunderstorm ID
     for ID in n:
         obj=prop.where(prop["v_ID"]==ID).dropna()
