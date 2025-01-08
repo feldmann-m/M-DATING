@@ -21,7 +21,6 @@ args = parser.parse_args()
 import sys
 sys.path.append(args.codedir)
 import os
-os.environ['METRANETLIB_PATH'] = '/srn/las/idl/lib/radlib/'
 import pandas as pd
 import skimage.morphology as skim
 pd.options.mode.chained_assignment = None
@@ -38,6 +37,10 @@ import pyart
 import library.variables as variables
 import library.plot as plot
 import library.io as io
+
+if not 'METRANETLIB_PATH' in os.environ:
+    os.environ['METRANETLIB_PATH'] = '/srn/las/idl/lib/radlib/'
+
 #%% Main function
 def main():
     #import variables
@@ -102,8 +105,6 @@ def main():
         with open(pfile) as f: gj = FeatureCollection(gs.load(f))
         vert_p=pd.concat((vert_p,gpd.GeoDataFrame.from_features(gj['features'])),axis=0)#vert_p.append(gpd.GeoDataFrame.from_features(gj['features']))
     print(vert_p); print(vert_n); print(trtcells)
-    #%%read TRT file of timestep, use to cut out precipitation data -> displayed in background
-    cells,timelist=io.get_TRT(time, path)
     try:
       b_file=glob.glob(path["lomdata"]+'CZC/*'+str(time)+'*')[0]
       print(b_file)
@@ -117,16 +118,7 @@ def main():
       background=copy.deepcopy(czc)
       background[background<0]=np.nan
     except:
-      b_file=glob.glob(path["lomdata"]+'CZC/*'+str(time)+'*')[0]
-      print('Problem with file',b_file)
-      newcells=skim.dilation(cells[0],footprint=np.ones([5,5]))
-      newcells[newcells==0]=np.nan
-      newcells[newcells>0]=1
-      background=newcells
-    #if generation of background fails, is generated empty
-    # else:
-    #   background=np.zeros([640,710])
-    #   background[:]=np.nan
+      background = np.full((640,710), np.nan)
     #%% generate plot
     imtitle='Detected mesocyclones on VIL background';savepath=path["outdir"]+'IM/';imname='ROT'+str(time+'.png')
     plot.plot_cart_hist(time,background,trtcells,vert_p,vert_n, imtitle, savepath, imname, radar)
