@@ -15,6 +15,7 @@ from matplotlib.colors import from_levels_and_colors
 #import nmmn.plots
 import shapefile
 import pandas as pd
+from PIL import Image
 
 
 def plot_ppi_MF_masked(theta, r, myfinaldata, vmin, vmax, cmap, bound, imtitle, savepath, imname):
@@ -194,7 +195,7 @@ def plot_cart_hist(time,background,trtcells,vert_p,vert_n, imtitle, savepath, im
     o_x=254000
     o_y=-159000
     # background=np.zeros([640,710]); background[:]=np.nan
-    fig=plt.figure(figsize=(6.4,7.1),frameon=False)#figsize=(14,10)
+    fig=plt.figure(figsize=(7.1,6.4),frameon=False)#figsize=(14,10)
     # cmap=plt.cm.turbo
     
     bounds = [0.00, 0.01, 0.16, 0.25, 0.40,
@@ -259,9 +260,9 @@ def plot_cart_hist(time,background,trtcells,vert_p,vert_n, imtitle, savepath, im
         
         color=np.array(['grey','aliceblue','green','darkorange','firebrick','purple'])
         if len(xp)>0:
-          p2=plt.scatter(xp,yp,s=10,c=color[ccp], vmin=0, vmax=5, marker="^",edgecolors='aqua',linewidth=0.2)#,alpha=0.8)
+          p2=plt.scatter(xp,yp,s=20,c=color[ccp], vmin=0, vmax=5, marker=r'$\circlearrowleft$',edgecolors='aqua',linewidth=0.15)#,alpha=0.8)
         if len(xn)>0:
-          p3=plt.scatter(xn,yn,s=10,c=color[ccn], vmin=0, vmax=5, marker="v",edgecolors='red',linewidth=0.2)#,alpha=0.5)
+          p3=plt.scatter(xn,yn,s=20,c=color[ccn], vmin=0, vmax=5, marker=r'$\circlearrowright$',edgecolors='grey',linewidth=0.15)#,alpha=0.5)
     # Selects rotation of current timestep and plots it larger      
     pcell=vert_p[vert_p.time.astype(int)==int(time)]
     ncell=vert_n[vert_n.time.astype(int)==int(time)]
@@ -285,9 +286,9 @@ def plot_cart_hist(time,background,trtcells,vert_p,vert_n, imtitle, savepath, im
     
     color=np.array(['grey','white','green','darkorange','firebrick','purple'])
     if len(xp)>0:
-      p2=plt.scatter(xp,yp,s=30,c=color[ccp], vmin=0, vmax=5, marker="^",edgecolors='aqua',linewidth=0.5)#,alpha=0.8)
+      p2=plt.scatter(xp,yp,s=45,c=color[ccp], vmin=0, vmax=5, marker=r'$\circlearrowleft$',edgecolors='aqua',linewidth=0.3)#,alpha=0.8)
     if len(xn)>0:
-      p3=plt.scatter(xn,yn,s=30,c=color[ccn], vmin=0, vmax=5, marker="v",edgecolors='red',linewidth=0.5)#,alpha=0.5)
+      p3=plt.scatter(xn,yn,s=45,c=color[ccn], vmin=0, vmax=5, marker=r'$\circlearrowright$',edgecolors='grey',linewidth=0.3)#,alpha=0.5)
     plt.axis('off')
     plt.ylim(0, 640)
     plt.xlim(0, 710)
@@ -297,8 +298,16 @@ def plot_cart_hist(time,background,trtcells,vert_p,vert_n, imtitle, savepath, im
     # plt.show()
     # with open(namefig, 'wb') as outfile:
     #     fig.canvas.print_png(outfile)
-    plt.savefig(namefig,transparent=True,bbox_inches='tight',dpi=300,pad_inches=0)
+
+    plt.savefig(namefig,transparent=True,bbox_inches='tight',dpi=259.8,pad_inches=0)
     plt.close()
+
+    # Resize the image to be sure
+    img = Image.open(namefig)
+    resized_img = img.resize((1420, 1280), Image.LANCZOS)
+
+    # Overwrite the original file with the resized image
+    resized_img.save(namefig)
     
 def plot_cart_day(trtcells,vert_p,vert_n, imtitle, savepath, imname, radar):
     """
@@ -364,10 +373,10 @@ def plot_cart_day(trtcells,vert_p,vert_n, imtitle, savepath, imname, radar):
           ccn=np.round((cn.values+1)).astype(int); ccn[ccn>5]=5
           color=np.array(['grey','aliceblue','green','darkorange','firebrick','purple'])
           if len(xp)>2:
-            p2=plt.scatter(xp,yp,s=10,c=color[ccp], vmin=0, vmax=5, marker="^",edgecolors='aqua',linewidth=0.2)#,alpha=0.8)
+            p2=plt.scatter(xp,yp,s=20,c=color[ccp], vmin=0, vmax=5, marker=r'$\circlearrowleft$',edgecolors='aqua',linewidth=0.15)#,alpha=0.8)
             p4 = plt.plot(xt,yt,color='black',linewidth=0.5)
           if len(xn)>2:
-            p3=plt.scatter(xn,yn,s=10,c=color[ccn], vmin=0, vmax=5, marker="v",edgecolors='red',linewidth=0.2)#,alpha=0.5)
+            p3=plt.scatter(xn,yn,s=20,c=color[ccn], vmin=0, vmax=5, marker=r'$\circlearrowright$',edgecolors='grey',linewidth=0.15)#,alpha=0.5)
             p4 = plt.plot(xt,yt,color='black',linewidth=0.5)
     plt.axis('off')
     plt.ylim(0, 640)
@@ -378,9 +387,16 @@ def plot_cart_day(trtcells,vert_p,vert_n, imtitle, savepath, imname, radar):
     # plt.show()
     # with open(namefig, 'wb') as outfile:
     #     fig.canvas.print_png(outfile)
-    plt.savefig(namefig,transparent=True,bbox_inches='tight',dpi=300,pad_inches=0)
+    plt.savefig(namefig,transparent=True,bbox_inches='tight',dpi=259.8,pad_inches=0)
     print('saving figure',namefig)
     plt.close()
+
+    # Resize the image to be sure
+    img = Image.open(namefig)
+    resized_img = img.resize((1420, 1280), Image.LANCZOS)
+
+    # Overwrite the original file with the resized image
+    resized_img.save(namefig)
 
 def plot_cart_scatter(myfinaldata, xp, yp, sp, xn, yn, sn, colorp, colorn, contours, imtitle, savepath, imname, radar):
     """
