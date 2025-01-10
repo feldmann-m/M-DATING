@@ -235,8 +235,11 @@ def plot_cart_hist(time,background,trtcells,vert_p,vert_n, imtitle, savepath, im
     ids=np.unique(idds.ID).astype(int)
     for t_id in ids:
         tcell=trtcells[trtcells.traj_ID.astype(int)==t_id]
-        pcell=vert_p[vert_p.ID.astype(int)==t_id]
-        ncell=vert_n[vert_n.ID.astype(int)==t_id]
+
+        # select rotations of the current cell without the current timestep
+        pcell=vert_p[(vert_p.ID.astype(int)==t_id) & (vert_p.time.astype(int)!=int(time))]
+        ncell=vert_n[(vert_n.ID.astype(int)==t_id) & (vert_n.time.astype(int)!=int(time))]
+
         # if np.nansum(pcell.flag)+np.nansum(ncell.flag)==0: continue
         xp = (pcell.x.astype(float) - o_x)/1000
         xn = (ncell.x.astype(float) - o_x)/1000
@@ -263,6 +266,7 @@ def plot_cart_hist(time,background,trtcells,vert_p,vert_n, imtitle, savepath, im
           p2=plt.scatter(xp,yp,s=20,c=color[ccp], vmin=0, vmax=5, marker=r'$\circlearrowleft$',edgecolors='aqua',linewidth=0.15)#,alpha=0.8)
         if len(xn)>0:
           p3=plt.scatter(xn,yn,s=20,c=color[ccn], vmin=0, vmax=5, marker=r'$\circlearrowright$',edgecolors='grey',linewidth=0.15)#,alpha=0.5)
+    
     # Selects rotation of current timestep and plots it larger      
     pcell=vert_p[vert_p.time.astype(int)==int(time)]
     ncell=vert_n[vert_n.time.astype(int)==int(time)]
