@@ -120,8 +120,18 @@ def main():
     except:
       background = np.full((640,710), np.nan)
     #%% generate plot
-    imtitle='Detected mesocyclones on VIL background';savepath=path["outdir"]+'IM/';imname='ROT'+str(time+'.png')
-    plot.plot_cart_hist(time,background,trtcells,vert_p,vert_n, imtitle, savepath, imname, radar)
+    imtitle='Detected mesocyclones on VIL background'
+
+
+    # plot with MaxEcho background
+    imname='ROT'+str(time+'.png')
+    savepath=path["outdir"]+'IM/'
+    plot.plot_cart_hist(time,trtcells,vert_p,vert_n, imtitle, savepath, imname, radar, background=background)
+
+    # plot with no background
+    imname='rot'+str(time+'.png')
+    savepath=path["outdir"]+'IM_nobg/'
+    plot.plot_cart_hist(time,trtcells,vert_p,vert_n, imtitle, savepath, imname, radar)
 
 #%% CALL MAIN FUNCTION
 
