@@ -207,7 +207,7 @@ def _plot_background(background):
     plt.imshow(background, cmap=cmap, norm=norm)
 
 
-def plot_cart_hist(time,background,trtcells,vert_p,vert_n, imtitle, savepath, imname, radar, plot_background=True):
+def plot_cart_hist(time,trtcells,vert_p,vert_n, imtitle, savepath, imname, radar, background=None):
     """
     plots cartesian reflectivity and radar locations and detected mesocyclones and 2h history
 
@@ -234,7 +234,7 @@ def plot_cart_hist(time,background,trtcells,vert_p,vert_n, imtitle, savepath, im
     fig=plt.figure(figsize=(7.1,6.4),frameon=False)#figsize=(14,10)
     # cmap=plt.cm.turbo
     
-    if plot_background:
+    if background is not None:
         _plot_background(background)
 
     p1=plt.scatter((np.array(radar["x"])- o_x)/1000,(np.array(radar["y"])- o_y)/1000,s=5,c='black',marker=".")
