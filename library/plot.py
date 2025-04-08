@@ -235,8 +235,11 @@ def plot_cart_hist(time,background,trtcells,vert_p,vert_n, imtitle, savepath, im
     ids=np.unique(idds.ID).astype(int)
     for t_id in ids:
         tcell=trtcells[trtcells.traj_ID.astype(int)==t_id]
-        pcell=vert_p[vert_p.ID.astype(int)==t_id]
-        ncell=vert_n[vert_n.ID.astype(int)==t_id]
+
+        # select rotations of the current cell without the current timestep
+        pcell=vert_p[(vert_p.ID.astype(int)==t_id) & (vert_p.time.astype(int)!=int(time))]
+        ncell=vert_n[(vert_n.ID.astype(int)==t_id) & (vert_n.time.astype(int)!=int(time))]
+
         # if np.nansum(pcell.flag)+np.nansum(ncell.flag)==0: continue
         xp = (pcell.x.astype(float) - o_x)/1000
         xn = (ncell.x.astype(float) - o_x)/1000
@@ -263,6 +266,7 @@ def plot_cart_hist(time,background,trtcells,vert_p,vert_n, imtitle, savepath, im
           p2=plt.scatter(xp,yp,s=20,c=color[ccp], vmin=0, vmax=5, marker=r'$\circlearrowleft$',edgecolors='aqua',linewidth=0.15)#,alpha=0.8)
         if len(xn)>0:
           p3=plt.scatter(xn,yn,s=20,c=color[ccn], vmin=0, vmax=5, marker=r'$\circlearrowright$',edgecolors='grey',linewidth=0.15)#,alpha=0.5)
+    
     # Selects rotation of current timestep and plots it larger      
     pcell=vert_p[vert_p.time.astype(int)==int(time)]
     ncell=vert_n[vert_n.time.astype(int)==int(time)]
@@ -302,12 +306,6 @@ def plot_cart_hist(time,background,trtcells,vert_p,vert_n, imtitle, savepath, im
     plt.savefig(namefig,transparent=True,bbox_inches='tight',dpi=259.8,pad_inches=0)
     plt.close()
 
-    # Resize the image to be sure
-    img = Image.open(namefig)
-    resized_img = img.resize((1420, 1280), Image.LANCZOS)
-
-    # Overwrite the original file with the resized image
-    resized_img.save(namefig)
     
 def plot_cart_day(trtcells,vert_p,vert_n, imtitle, savepath, imname, radar):
     """
@@ -333,7 +331,7 @@ def plot_cart_day(trtcells,vert_p,vert_n, imtitle, savepath, imname, radar):
     o_x=254000
     o_y=-159000
     background=np.zeros([640,710]); background[:]=np.nan
-    fig=plt.figure(figsize=(6.4,7.1),frameon=False)#figsize=(14,10)
+    fig=plt.figure(figsize=(7.1,6.4),frameon=False)#figsize=(14,10)
     p0=plt.imshow(background, origin='lower')
     p1=plt.scatter((np.array(radar["x"])- o_x)/1000,(np.array(radar["y"])- o_y)/1000,s=5,c='black',marker=".")
     print(len(trtcells))
@@ -391,12 +389,6 @@ def plot_cart_day(trtcells,vert_p,vert_n, imtitle, savepath, imname, radar):
     print('saving figure',namefig)
     plt.close()
 
-    # Resize the image to be sure
-    img = Image.open(namefig)
-    resized_img = img.resize((1420, 1280), Image.LANCZOS)
-
-    # Overwrite the original file with the resized image
-    resized_img.save(namefig)
 
 def plot_cart_scatter(myfinaldata, xp, yp, sp, xn, yn, sn, colorp, colorn, contours, imtitle, savepath, imname, radar):
     """
