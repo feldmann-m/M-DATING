@@ -122,13 +122,14 @@ def main():
     #%% generate plot
     imtitle='Detected mesocyclones on VIL background'
 
-    imname='ROT'+str(time+'.png')
 
     # plot with MaxEcho background
+    imname='ROT'+str(time+'.png')
     savepath=path["outdir"]+'IM/'
     plot.plot_cart_hist(time,trtcells,vert_p,vert_n, imtitle, savepath, imname, radar, background=background)
 
     # plot with no background
+    imname='rot'+str(time+'.png')
     savepath=path["outdir"]+'IM_nobg/'
     plot.plot_cart_hist(time,trtcells,vert_p,vert_n, imtitle, savepath, imname, radar)
 
