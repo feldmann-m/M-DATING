@@ -64,6 +64,12 @@ def main():
     except FileExistsError:
         print('Directory already exists')
 
+    try:
+        os.mkdir(args.outdir+'/IM_nobg/')
+        print('Directory created')
+    except FileExistsError:
+        print('Directory already exists')
+
     # get thunderstorm data
     t=0
     trt_df, trt_cells, timelist= io.read_TRT(path,0,time)
