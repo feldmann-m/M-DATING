@@ -171,33 +171,8 @@ def plot_cart_obj(background, xp, yp, sp, fp, xn, yn, sn, fn, cp, cn, imtitle, s
     plt.savefig(namefig,transparent=True,bbox_inches='tight',dpi=300,pad_inches=0)
     plt.close()
 
-def plot_cart_hist(time,background,trtcells,vert_p,vert_n, imtitle, savepath, imname, radar):
-    """
-    plots cartesian reflectivity and radar locations and detected mesocyclones and 2h history
 
-    Parameters
-    ----------
-
-    imtitle : string
-        image title.
-    savepath : string
-        path.
-    imname : string
-        filename.
-    radar : dict
-        radar meta data.
-
-    Returns
-    -------
-    None.
-
-    """
-    o_x=254000
-    o_y=-159000
-    # background=np.zeros([640,710]); background[:]=np.nan
-    fig=plt.figure(figsize=(7.1,6.4),frameon=False)#figsize=(14,10)
-    # cmap=plt.cm.turbo
-    
+def _plot_background(background):
     bounds = [0.00, 0.01, 0.16, 0.25, 0.40,
               0.63, 1.00, 1.60, 2.50, 4.00,
               6.30, 10.00, 16.00, 25.00, 40.00,
@@ -229,7 +204,39 @@ def plot_cart_hist(time,background,trtcells,vert_p,vert_n, imtitle, savepath, im
     cmap, _ = from_levels_and_colors(bounds,colors,extend='max')
     norm = mpl.colors.BoundaryNorm(bounds, ncolors=len(bounds) - 1)
     
-    p0=plt.imshow(background, cmap=cmap, norm=norm)
+    plt.imshow(background, cmap=cmap, norm=norm)
+
+
+def plot_cart_hist(time,background,trtcells,vert_p,vert_n, imtitle, savepath, imname, radar, plot_background=True):
+    """
+    plots cartesian reflectivity and radar locations and detected mesocyclones and 2h history
+
+    Parameters
+    ----------
+
+    imtitle : string
+        image title.
+    savepath : string
+        path.
+    imname : string
+        filename.
+    radar : dict
+        radar meta data.
+
+    Returns
+    -------
+    None.
+
+    """
+    o_x=254000
+    o_y=-159000
+    # background=np.zeros([640,710]); background[:]=np.nan
+    fig=plt.figure(figsize=(7.1,6.4),frameon=False)#figsize=(14,10)
+    # cmap=plt.cm.turbo
+    
+    if plot_background:
+        _plot_background(background)
+
     p1=plt.scatter((np.array(radar["x"])- o_x)/1000,(np.array(radar["y"])- o_y)/1000,s=5,c='black',marker=".")
     idds=pd.concat([vert_p,vert_n])
     ids=np.unique(idds.ID).astype(int)
