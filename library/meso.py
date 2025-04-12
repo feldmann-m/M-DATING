@@ -206,12 +206,13 @@ def tower(rotation, areas, radar, shear, time, path):
     towers=pd.DataFrame(data=0.0, index=n, columns=headers)
 
     # Set default value for radar range
+    # Comment to activate vicinity bug
     towers['A_range'] = 999
     towers['D_range'] = 999
     towers['L_range'] = 999
     towers['P_range'] = 999
     towers['W_range'] = 999
-
+    
     ## Build rotation tower per thunderstorm ID
     for ID in n:
         obj=prop.where(prop["v_ID"]==ID).dropna()
@@ -255,7 +256,7 @@ def tower(rotation, areas, radar, shear, time, path):
                 towers["W_el"][ID]=len(np.unique(o["elevation"]))
         # Identify minimum range from any detecting radar
         # Establish range-dependent depth threshold
-        ra=np.nanmin([towers.A_range,towers.D_range,towers.L_range,towers.P_range,towers.W_range])
+        ra=np.nanmin([towers.A_range[ID],towers.D_range[ID],towers.L_range[ID],towers.P_range[ID],towers.W_range[ID]])
         if ra>100:
             dz_min=shear["zu"]-shear["zd"]
         if ra>20 and ra<=100:
