@@ -206,7 +206,6 @@ def tower(rotation, areas, radar, shear, time, path):
     towers=pd.DataFrame(data=0.0, index=n, columns=headers)
 
     # Set default value for radar range
-    # Comment to activate vicinity bug
     towers['A_range'] = 999
     towers['D_range'] = 999
     towers['L_range'] = 999
