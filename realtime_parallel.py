@@ -243,12 +243,12 @@ def radel_processor (rotation_pos, rotation_neg, rels, radar, cartesian, path, s
           # process each thunderstorm individually
           for ii in ids:
               rotation_pos1, rotation_neg1 = meso.cell_loop(ii, l_mask, az_shear, mfd_conv, rotation_pos1, rotation_neg1, distance, resolution, shear, radar, coord, timelist, r, el)
-          rotation_pos["prop"]=pd.concat([rotation_pos["prop"],rotation_pos1["prop"]], ignore_index=True)
-          rotation_neg["prop"]=pd.concat([rotation_neg["prop"],rotation_neg1["prop"]], ignore_index=True) 
-          rotation_pos["shear_objects"].append(rotation_pos1["shear_objects"])
-          rotation_neg["shear_objects"].append(rotation_neg1["shear_objects"])
-          rotation_pos["shear_ID"].append(rotation_pos1["shear_ID"])
-          rotation_neg["shear_ID"].append(rotation_neg1["shear_ID"])
+              rotation_pos["prop"]=pd.concat([rotation_pos["prop"],rotation_pos1["prop"]], ignore_index=True)
+              rotation_neg["prop"]=pd.concat([rotation_neg["prop"],rotation_neg1["prop"]], ignore_index=True) 
+              rotation_pos["shear_objects"].append(rotation_pos1["shear_objects"])
+              rotation_neg["shear_objects"].append(rotation_neg1["shear_objects"])
+              rotation_pos["shear_ID"].append(rotation_pos1["shear_ID"])
+              rotation_neg["shear_ID"].append(rotation_neg1["shear_ID"])
 
       return_dict[el]= rotation_pos, rotation_neg
   
