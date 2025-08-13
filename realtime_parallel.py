@@ -110,7 +110,6 @@ def main():
           #Call parallel process per elevation, block print statements in parallelized section
           print('Launching process for elevation',ell+1)
           io.blockPrint()
-          #print(masks)
           p = multiprocessing.Process(target=radel_processor, args=(rotation_pos, rotation_neg, rels, radar, cartesian,
                                         path, specs, files, shear, resolution, timelist,
                                         t, masks, coord[ell], return_dict))
@@ -219,6 +218,7 @@ def radel_processor (rotation_pos, rotation_neg, rels, radar, cartesian, path, s
       el=rel%100-1
       print("Analysing radar: ",r+1,", elevation: ",el+1)
       l_mask=masks[r]
+
     
       # Find and read velocity file
       dvfile=glob.glob(path["dvdata"]+'DV'+radar["radars"][r]+'/*'+timelist[t]+'*.8'+radar["elevations"][el])[0]
