@@ -110,7 +110,6 @@ def main():
           #Call parallel process per elevation, block print statements in parallelized section
           print('Launching process for elevation',ell+1)
           io.blockPrint()
-          #print(masks)
           p = multiprocessing.Process(target=radel_processor, args=(rotation_pos, rotation_neg, rels, radar, cartesian,
                                         path, specs, files, shear, resolution, timelist,
                                         t, masks, coord[ell], return_dict))
@@ -212,14 +211,14 @@ def radel_processor (rotation_pos, rotation_neg, rels, radar, cartesian, path, s
     # Initialize rotation dictionaries
     rotation_pos1=variables.meso()
     rotation_neg1=variables.meso()
-    nn=0
     for rel in rels:
       print('Radar-elevation is', rel)
       # Regain radar and elevation numbers
       r=int(rel/100)-1
       el=rel%100-1
       print("Analysing radar: ",r+1,", elevation: ",el+1)
-      l_mask=masks[nn]
+      l_mask=masks[r]
+
     
       # Find and read velocity file
       dvfile=glob.glob(path["dvdata"]+'DV'+radar["radars"][r]+'/*'+timelist[t]+'*.8'+radar["elevations"][el])[0]
@@ -244,13 +243,12 @@ def radel_processor (rotation_pos, rotation_neg, rels, radar, cartesian, path, s
           # process each thunderstorm individually
           for ii in ids:
               rotation_pos1, rotation_neg1 = meso.cell_loop(ii, l_mask, az_shear, mfd_conv, rotation_pos1, rotation_neg1, distance, resolution, shear, radar, coord, timelist, r, el)
-          nn+=1 
-          rotation_pos["prop"]=pd.concat([rotation_pos["prop"],rotation_pos1["prop"]], ignore_index=True)
-          rotation_neg["prop"]=pd.concat([rotation_neg["prop"],rotation_neg1["prop"]], ignore_index=True) 
-          rotation_pos["shear_objects"].append(rotation_pos1["shear_objects"])
-          rotation_neg["shear_objects"].append(rotation_neg1["shear_objects"])
-          rotation_pos["shear_ID"].append(rotation_pos1["shear_ID"])
-          rotation_neg["shear_ID"].append(rotation_neg1["shear_ID"])
+              rotation_pos["prop"]=pd.concat([rotation_pos["prop"],rotation_pos1["prop"]], ignore_index=True)
+              rotation_neg["prop"]=pd.concat([rotation_neg["prop"],rotation_neg1["prop"]], ignore_index=True) 
+              rotation_pos["shear_objects"].append(rotation_pos1["shear_objects"])
+              rotation_neg["shear_objects"].append(rotation_neg1["shear_objects"])
+              rotation_pos["shear_ID"].append(rotation_pos1["shear_ID"])
+              rotation_neg["shear_ID"].append(rotation_neg1["shear_ID"])
 
       return_dict[el]= rotation_pos, rotation_neg
   

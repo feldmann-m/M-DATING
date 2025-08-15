@@ -270,9 +270,9 @@ def plot_cart_hist(time,trtcells,vert_p,vert_n, imtitle, savepath, imname, radar
         
         color=np.array(['grey','aliceblue','green','darkorange','firebrick','purple'])
         if len(xp)>0:
-          p2=plt.scatter(xp,yp,s=20,c=color[ccp], vmin=0, vmax=5, marker=r'$\circlearrowleft$',edgecolors='aqua',linewidth=0.15)#,alpha=0.8)
+          p2=plt.scatter(xp,yp,s=20,c=color[ccp], vmin=0, vmax=5, marker=r'$\circlearrowright$',edgecolors='aqua',linewidth=0.15)#,alpha=0.8)
         if len(xn)>0:
-          p3=plt.scatter(xn,yn,s=20,c=color[ccn], vmin=0, vmax=5, marker=r'$\circlearrowright$',edgecolors='grey',linewidth=0.15)#,alpha=0.5)
+          p3=plt.scatter(xn,yn,s=20,c=color[ccn], vmin=0, vmax=5, marker=r'$\circlearrowleft$',edgecolors='grey',linewidth=0.15)#,alpha=0.5)
     
     # Selects rotation of current timestep and plots it larger      
     pcell=vert_p[vert_p.time.astype(int)==int(time)]
@@ -297,9 +297,9 @@ def plot_cart_hist(time,trtcells,vert_p,vert_n, imtitle, savepath, imname, radar
     
     color=np.array(['grey','white','green','darkorange','firebrick','purple'])
     if len(xp)>0:
-      p2=plt.scatter(xp,yp,s=45,c=color[ccp], vmin=0, vmax=5, marker=r'$\circlearrowleft$',edgecolors='aqua',linewidth=0.3)#,alpha=0.8)
+      p2=plt.scatter(xp,yp,s=45,c=color[ccp], vmin=0, vmax=5, marker=r'$\circlearrowright$',edgecolors='aqua',linewidth=0.3)#,alpha=0.8)
     if len(xn)>0:
-      p3=plt.scatter(xn,yn,s=45,c=color[ccn], vmin=0, vmax=5, marker=r'$\circlearrowright$',edgecolors='grey',linewidth=0.3)#,alpha=0.5)
+      p3=plt.scatter(xn,yn,s=45,c=color[ccn], vmin=0, vmax=5, marker=r'$\circlearrowleft$',edgecolors='grey',linewidth=0.3)#,alpha=0.5)
     plt.axis('off')
     plt.ylim(0, 640)
     plt.xlim(0, 710)
@@ -378,10 +378,10 @@ def plot_cart_day(trtcells,vert_p,vert_n, imtitle, savepath, imname, radar):
           ccn=np.round((cn.values+1)).astype(int); ccn[ccn>5]=5
           color=np.array(['grey','aliceblue','green','darkorange','firebrick','purple'])
           if len(xp)>2:
-            p2=plt.scatter(xp,yp,s=20,c=color[ccp], vmin=0, vmax=5, marker=r'$\circlearrowleft$',edgecolors='aqua',linewidth=0.15)#,alpha=0.8)
+            p2=plt.scatter(xp,yp,s=20,c=color[ccp], vmin=0, vmax=5, marker=r'$\circlearrowright$',edgecolors='aqua',linewidth=0.15)#,alpha=0.8)
             p4 = plt.plot(xt,yt,color='black',linewidth=0.5)
           if len(xn)>2:
-            p3=plt.scatter(xn,yn,s=20,c=color[ccn], vmin=0, vmax=5, marker=r'$\circlearrowright$',edgecolors='grey',linewidth=0.15)#,alpha=0.5)
+            p3=plt.scatter(xn,yn,s=20,c=color[ccn], vmin=0, vmax=5, marker=r'$\circlearrowleft$',edgecolors='grey',linewidth=0.15)#,alpha=0.5)
             p4 = plt.plot(xt,yt,color='black',linewidth=0.5)
     plt.axis('off')
     plt.ylim(0, 640)
