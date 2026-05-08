@@ -152,8 +152,8 @@ def plot_cart_obj(background, xp, yp, sp, fp, xn, yn, sn, fn, cp, cn, imtitle, s
 
     ap=np.ones(len(fp)); ap[fp==0]=0.8
     an=np.ones(len(fn)); an[fn==0]=0.8
-    ccp=np.round((cp.values+1)*fp.values).astype(int); ccp[ccp>5]=5
-    ccn=np.round((cn.values+1)*fn.values).astype(int); ccn[ccn>5]=5
+    ccp=np.round((cp.values)*fp.values).astype(int); ccp[ccp>5]=5
+    ccn=np.round((cn.values)*fn.values).astype(int); ccn[ccn>5]=5
     color=np.array(['grey','white','green','darkorange','firebrick','purple'])
     if len(xp)>0:
       p2=plt.scatter(xp,yp,s=30,c=color[ccp], vmin=0, vmax=5, marker="^",edgecolors='aqua')
@@ -263,8 +263,8 @@ def plot_cart_hist(time,trtcells,vert_p,vert_n, imtitle, savepath, imname, radar
         an=np.ones(len(fn)); an[fn==0]=0.8
         dp= np.nansum(pcell.dist)>0; dn= np.nansum(ncell.dist)>0
         fp= dp; fn=dn # int((len(xp)>3) * dp); fn= int((len(xn)>3) * dn) #only grey if too close to radar
-        ccp=np.round((cp.values+1)*fp).astype(int); ccp[ccp>5]=5
-        ccn=np.round((cn.values+1)*fn).astype(int); ccn[ccn>5]=5
+        ccp=np.round((cp.values)*fp).astype(int); ccp[ccp>5]=5
+        ccn=np.round((cn.values)*fn).astype(int); ccn[ccn>5]=5
         
         p4 = plt.plot(xt,yt,color='black',linewidth=0.5)
         
@@ -291,8 +291,8 @@ def plot_cart_hist(time,trtcells,vert_p,vert_n, imtitle, savepath, imname, radar
     an=np.ones(len(fn)); an[fn==0]=0.8
     dp= pcell.dist>0; dn= ncell.dist>0
     fp=dp; fn=dn #fp= int((len(xp)>3) * dp); fn= int((len(xn)>3) * dn)
-    ccp=np.round((cp.values+1)*fp).astype(int); ccp[ccp>5]=5
-    ccn=np.round((cn.values+1)*fn).astype(int); ccn[ccn>5]=5
+    ccp=np.round((cp.values)*fp).astype(int); ccp[ccp>5]=5
+    ccn=np.round((cn.values)*fn).astype(int); ccn[ccn>5]=5
     
     
     color=np.array(['grey','white','green','darkorange','firebrick','purple'])
@@ -354,8 +354,8 @@ def plot_cart_day(trtcells,vert_p,vert_n, imtitle, savepath, imname, radar):
           
           dp= np.nansum(pcell.dist)>0; dn= np.nansum(ncell.dist)>0
           fp= int((len(pcell)>3) * dp); fn= int((len(ncell)>3) * dn)
-          ccp=np.round((cp.values+1)*fp).astype(int); ccp[ccp>5]=5
-          ccn=np.round((cn.values+1)*fn).astype(int); ccn[ccn>5]=5
+          ccp=np.round((cp.values)*fp).astype(int); ccp[ccp>5]=5
+          ccn=np.round((cn.values)*fn).astype(int); ccn[ccn>5]=5
           
           if fp+fn==0: continue
           xp = (pcell.x.astype(float) - o_x)/1000
@@ -374,8 +374,8 @@ def plot_cart_day(trtcells,vert_p,vert_n, imtitle, savepath, imname, radar):
           #an=np.ones(len(fn)); an[fn==0]=0.8
           
           
-          ccp=np.round((cp.values+1)).astype(int); ccp[ccp>5]=5
-          ccn=np.round((cn.values+1)).astype(int); ccn[ccn>5]=5
+          ccp=np.round((cp.values)).astype(int); ccp[ccp>5]=5
+          ccn=np.round((cn.values)).astype(int); ccn[ccn>5]=5
           color=np.array(['grey','aliceblue','green','darkorange','firebrick','purple'])
           if len(xp)>2:
             p2=plt.scatter(xp,yp,s=20,c=color[ccp], vmin=0, vmax=5, marker=r'$\circlearrowright$',edgecolors='aqua',linewidth=0.15)#,alpha=0.8)

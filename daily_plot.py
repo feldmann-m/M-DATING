@@ -47,6 +47,7 @@ def main():
     #find TRT and rotation files of given day
     #print(path)
     trtfiles=glob.glob(path["lomdata"]+'TRTC/*'+day+'*.json')
+    trtfiles += glob.glob(path["lomdata"]+'TRTC/*'+day+'*.trt')
     trtfiles=sorted(trtfiles)
     pfiles=glob.glob(path["outdir"]+'ROT/'+'PROT*'+day+'*.json')
     pfiles=sorted(pfiles)
