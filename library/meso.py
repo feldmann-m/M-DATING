@@ -158,7 +158,7 @@ def shear_group(rotation, sign, myfinaldata, az_shear, labels, resolution, dista
                 a=len(np.where(indices[1]==m)[0])
                 vec_width.append(distance[0,m]*a)
             maxwidth=np.nanmax(vec_width)
-            maxlen=len(np.unique(indices[1]))
+            maxlen=len(np.unique(indices[1]))*resolution
             ratio=maxlen/maxwidth
             rankvel=(dvel-min_rvel)/(min_rvel)
             rankvort=(vort-min_vort)/(4*min_vort)
