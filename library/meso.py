@@ -158,7 +158,7 @@ def shear_group(rotation, sign, myfinaldata, az_shear, labels, resolution, dista
                 a=len(np.where(indices[1]==m)[0])
                 vec_width.append(distance[0,m]*a)
             maxwidth=np.nanmax(vec_width)
-            maxlen=len(np.unique(indices[1]))
+            maxlen=len(np.unique(indices[1]))*resolution
             ratio=maxlen/maxwidth
             rankvel=(dvel-min_rvel)/(min_rvel)
             rankvort=(vort-min_vort)/(4*min_vort)
@@ -216,10 +216,9 @@ def tower(rotation, areas, radar, shear, time, path):
     for ID in n:
         obj=prop.where(prop["v_ID"]==ID).dropna()
         if len(obj)<1: continue
-        towers["ID"][ID]=ID
-        #towers["trtlat"][ID]=obj["trtlat"].values
-        #towers["trtlon"][ID]=obj["trtlon"].values
-        towers["radar"][ID]=np.unique(obj["radar"].values)
+        towers = towers.astype(object)
+        towers.loc[ID, "ID"]=ID
+        towers.at[ID, "radar"]=np.unique(obj["radar"].values)
         r_range=[]
         r_elev=[]
         r_n=[]
@@ -229,30 +228,30 @@ def tower(rotation, areas, radar, shear, time, path):
             r_n.append(len(o["vol"]))
             r_elev.append(len(np.unique(o["elevation"])))
             if n == 'A':
-                towers["A"][ID]=1
-                towers["A_range"][ID]=np.average(o["range"], weights=o["size"])*0.5
-                towers["A_n"][ID]=len(o["vol"])
-                towers["A_el"][ID]=len(np.unique(o["elevation"]))
+                towers.loc[ID, "A"]=1
+                towers.loc[ID, "A_range"]=np.average(o["range"], weights=o["size"])*0.5
+                towers.loc[ID, "A_n"]=len(o["vol"])
+                towers.loc[ID, "A_el"]=len(np.unique(o["elevation"]))
             if n == 'D':
-                towers["D"][ID]=1
-                towers["D_range"][ID]=np.average(o["range"], weights=o["size"])*0.5
-                towers["D_n"][ID]=len(o["vol"])
-                towers["D_el"][ID]=len(np.unique(o["elevation"]))
+                towers.loc[ID, "D"]=1
+                towers.loc[ID, "D_range"]=np.average(o["range"], weights=o["size"])*0.5
+                towers.loc[ID, "D_n"]=len(o["vol"])
+                towers.loc[ID, "D_el"]=len(np.unique(o["elevation"]))
             if n == 'L':
-                towers["L"][ID]=1
-                towers["L_range"][ID]=np.average(o["range"], weights=o["size"])*0.5
-                towers["L_n"][ID]=len(o["vol"])
-                towers["L_el"][ID]=len(np.unique(o["elevation"]))
+                towers.loc[ID, "L"]=1
+                towers.loc[ID, "L_range"]=np.average(o["range"], weights=o["size"])*0.5
+                towers.loc[ID, "L_n"]=len(o["vol"])
+                towers.loc[ID, "L_el"]=len(np.unique(o["elevation"]))
             if n == 'P':
-                towers["P"][ID]=1
-                towers["P_range"][ID]=np.average(o["range"], weights=o["size"])*0.5
-                towers["P_n"][ID]=len(o["vol"])
-                towers["P_el"][ID]=len(np.unique(o["elevation"]))
+                towers.loc[ID, "P"]=1
+                towers.loc[ID, "P_range"]=np.average(o["range"], weights=o["size"])*0.5
+                towers.loc[ID, "P_n"]=len(o["vol"])
+                towers.loc[ID, "P_el"]=len(np.unique(o["elevation"]))
             if n == 'W':
-                towers["W"][ID]=1
-                towers["W_range"][ID]=np.average(o["range"], weights=o["size"])*0.5
-                towers["W_n"][ID]=len(o["vol"])
-                towers["W_el"][ID]=len(np.unique(o["elevation"]))
+                towers.loc[ID, "W"]=1
+                towers.loc[ID, "W_range"]=np.average(o["range"], weights=o["size"])*0.5
+                towers.loc[ID, "W_n"]=len(o["vol"])
+                towers.loc[ID, "W_el"]=len(np.unique(o["elevation"]))
         # Identify minimum range from any detecting radar
         # Establish range-dependent depth threshold
         ra=np.nanmin([towers.A_range[ID],towers.D_range[ID],towers.L_range[ID],towers.P_range[ID],towers.W_range[ID]])
@@ -264,70 +263,70 @@ def tower(rotation, areas, radar, shear, time, path):
             dz_min=shear["zu"]-shear["zu"]*((20-ra)/20)
         print("Minimum range, depth threshold", ra,dz_min)
         
-        towers["dz"][ID]=max(obj["z"])-min(obj["z"])
+        towers.loc[ID, "dz"]=max(obj["z"])-min(obj["z"])
         # If depth threshold not met, discard 3D object
         if towers["dz"][ID]<dz_min: towers.loc[ID]=np.nan; print('shear area too shallow', ID); continue
         
         # All criteria met, fill rotation-tower dataframe with percentiles of 2D patches
-        towers["z_0"][ID]=np.nanmin(obj["z"])
-        towers["z_10"][ID]=np.percentile(obj["z"],10)
-        towers["z_25"][ID]=np.percentile(obj["z"],25)
-        towers["z_50"][ID]=np.percentile(obj["z"],50)
-        towers["z_75"][ID]=np.percentile(obj["z"],75)
-        towers["z_90"][ID]=np.percentile(obj["z"],90)
-        towers["z_100"][ID]=np.nanmax(obj["z"])
-        towers["z_IQR"][ID]=np.percentile(obj["z"],75)-np.percentile(obj["z"],25)
-        towers["z_mean"][ID]=np.nanmean(obj["z"])
+        towers.loc[ID, "z_0"]=np.nanmin(obj["z"])
+        towers.loc[ID, "z_10"]=np.percentile(obj["z"],10)
+        towers.loc[ID, "z_25"]=np.percentile(obj["z"],25)
+        towers.loc[ID, "z_50"]=np.percentile(obj["z"],50)
+        towers.loc[ID, "z_75"]=np.percentile(obj["z"],75)
+        towers.loc[ID, "z_90"]=np.percentile(obj["z"],90)
+        towers.loc[ID, "z_100"]=np.nanmax(obj["z"])
+        towers.loc[ID, "z_IQR"]=np.percentile(obj["z"],75)-np.percentile(obj["z"],25)
+        towers.loc[ID, "z_mean"]=np.nanmean(obj["z"])
         
-        towers["d_0"][ID]=np.nanmin(obj["diam"])
-        towers["d_10"][ID]=np.percentile(obj["diam"],10)
-        towers["d_25"][ID]=np.percentile(obj["diam"],25)
-        towers["d_50"][ID]=np.percentile(obj["diam"],50)
-        towers["d_75"][ID]=np.percentile(obj["diam"],75)
-        towers["d_90"][ID]=np.percentile(obj["diam"],90)
-        towers["d_100"][ID]=np.nanmax(obj["diam"])
-        towers["d_IQR"][ID]=np.percentile(obj["diam"],75)-np.percentile(obj["diam"],25)
-        towers["d_mean"][ID]=np.nanmean(obj["diam"])
+        towers.loc[ID, "d_0"]=np.nanmin(obj["diam"])
+        towers.loc[ID, "d_10"]=np.percentile(obj["diam"],10)
+        towers.loc[ID, "d_25"]=np.percentile(obj["diam"],25)
+        towers.loc[ID, "d_50"]=np.percentile(obj["diam"],50)
+        towers.loc[ID, "d_75"]=np.percentile(obj["diam"],75)
+        towers.loc[ID, "d_90"]=np.percentile(obj["diam"],90)
+        towers.loc[ID, "d_100"]=np.nanmax(obj["diam"])
+        towers.loc[ID, "d_IQR"]=np.percentile(obj["diam"],75)-np.percentile(obj["diam"],25)
+        towers.loc[ID, "d_mean"]=np.nanmean(obj["diam"])
         
-        towers["r_0"][ID]=np.nanmin(obj["dvel"])
-        towers["r_10"][ID]=np.percentile(obj["dvel"],10)
-        towers["r_25"][ID]=np.percentile(obj["dvel"],25)
-        towers["r_50"][ID]=np.percentile(obj["dvel"],50)
-        towers["r_75"][ID]=np.percentile(obj["dvel"],75)
-        towers["r_90"][ID]=np.percentile(obj["dvel"],90)
-        towers["r_100"][ID]=np.nanmax(obj["dvel"])
-        towers["r_IQR"][ID]=np.percentile(obj["dvel"],75)-np.percentile(obj["dvel"],25)
-        towers["r_mean"][ID]=np.nanmean(obj["dvel"])
+        towers.loc[ID, "r_0"]=np.nanmin(obj["dvel"])
+        towers.loc[ID, "r_10"]=np.percentile(obj["dvel"],10)
+        towers.loc[ID, "r_25"]=np.percentile(obj["dvel"],25)
+        towers.loc[ID, "r_50"]=np.percentile(obj["dvel"],50)
+        towers.loc[ID, "r_75"]=np.percentile(obj["dvel"],75)
+        towers.loc[ID, "r_90"]=np.percentile(obj["dvel"],90)
+        towers.loc[ID, "r_100"]=np.nanmax(obj["dvel"])
+        towers.loc[ID, "r_IQR"]=np.percentile(obj["dvel"],75)-np.percentile(obj["dvel"],25)
+        towers.loc[ID, "r_mean"]=np.nanmean(obj["dvel"])
         
-        towers["v_0"][ID]=np.nanmin(obj["vort"])
-        towers["v_10"][ID]=np.percentile(obj["vort"],10)
-        towers["v_25"][ID]=np.percentile(obj["vort"],25)
-        towers["v_50"][ID]=np.percentile(obj["vort"],50)
-        towers["v_75"][ID]=np.percentile(obj["vort"],75)
-        towers["v_90"][ID]=np.percentile(obj["vort"],90)
-        towers["v_100"][ID]=np.nanmax(obj["vort"])
-        towers["v_IQR"][ID]=np.percentile(obj["vort"],75)-np.percentile(obj["vort"],25)
-        towers["v_mean"][ID]=np.nanmean(obj["vort"])
+        towers.loc[ID, "v_0"]=np.nanmin(obj["vort"])
+        towers.loc[ID, "v_10"]=np.percentile(obj["vort"],10)
+        towers.loc[ID, "v_25"]=np.percentile(obj["vort"],25)
+        towers.loc[ID, "v_50"]=np.percentile(obj["vort"],50)
+        towers.loc[ID, "v_75"]=np.percentile(obj["vort"],75)
+        towers.loc[ID, "v_90"]=np.percentile(obj["vort"],90)
+        towers.loc[ID, "v_100"]=np.nanmax(obj["vort"])
+        towers.loc[ID, "v_IQR"]=np.percentile(obj["vort"],75)-np.percentile(obj["vort"],25)
+        towers.loc[ID, "v_mean"]=np.nanmean(obj["vort"])
         
-        towers["rank_0"][ID]=np.nanmin(obj["rank"])
-        towers["rank_10"][ID]=np.percentile(obj["rank"],10)
-        towers["rank_25"][ID]=np.percentile(obj["rank"],25)
-        towers["rank_50"][ID]=np.percentile(obj["rank"],50)
-        towers["rank_75"][ID]=np.percentile(obj["rank"],75)
-        towers["rank_90"][ID]=np.percentile(obj["rank"],90)
-        towers["rank_100"][ID]=np.nanmax(obj["rank"])
-        towers["rank_IQR"][ID]=np.percentile(obj["rank"],75)-np.percentile(obj["rank"],25)
-        towers["rank_mean"][ID]=np.nanmean(obj["rank"])
+        towers.loc[ID, "rank_0"]=np.nanmin(obj["rank"])
+        towers.loc[ID, "rank_10"]=np.percentile(obj["rank"],10)
+        towers.loc[ID, "rank_25"]=np.percentile(obj["rank"],25)
+        towers.loc[ID, "rank_50"]=np.percentile(obj["rank"],50)
+        towers.loc[ID, "rank_75"]=np.percentile(obj["rank"],75)
+        towers.loc[ID, "rank_90"]=np.percentile(obj["rank"],90)
+        towers.loc[ID, "rank_100"]=np.nanmax(obj["rank"])
+        towers.loc[ID, "rank_IQR"]=np.percentile(obj["rank"],75)-np.percentile(obj["rank"],25)
+        towers.loc[ID, "rank_mean"]=np.nanmean(obj["rank"])
         
-        towers["size_sum"][ID]=np.sum(obj["size"])
-        towers["size_mean"][ID]=np.nanmean(obj["size"])
-        towers["vol_sum"][ID]=np.sum(obj["vol"])
-        towers["vol_mean"][ID]=np.nanmean(obj["vol"])
+        towers.loc[ID, "size_sum"]=np.sum(obj["size"])
+        towers.loc[ID, "size_mean"]=np.nanmean(obj["size"])
+        towers.loc[ID, "vol_sum"]=np.sum(obj["vol"])
+        towers.loc[ID, "vol_mean"]=np.nanmean(obj["vol"])
         
-        towers["x"][ID]=np.average(obj["x"], weights=obj["size"])
-        towers["y"][ID]=np.average(obj["y"], weights=obj["size"])
-        towers["dz"][ID]=max(obj["z"])-min(obj["z"])
-        towers["time"][ID]=time
+        towers.loc[ID, "x"]=np.average(obj["x"], weights=obj["size"])
+        towers.loc[ID, "y"]=np.average(obj["y"], weights=obj["size"])
+        towers.loc[ID, "dz"]=max(obj["z"])-min(obj["z"])
+        towers.loc[ID, "time"]=time
         print('Object merged; depth, rank, vorticity and rvel: ',towers["dz"][ID],towers["rank_90"][ID],towers["v_90"][ID],towers["r_90"][ID])
     towers=towers.dropna()
     print("Towers found: ", len(towers))
